@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: propagent-app
+    ports:
+      - '3000:3000'
+    environment:
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - APP_NAME=PropAgent
+      - MONGODB_URI=mongodb://mongodb:27017/propagent
+      - JWT_SECRET=f7e4a8b29c91d4e32c8152f6f4c8038b3a0b5a1c3eef53ad48e9cbb87a6c9d2f
+      - JWT_EXPIRES_IN=7d
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_FROM=noreply@yourdomain.com
+      - AI_MODEL=gpt-4o-mini
+      - UPLOAD_DIR=public/uploads
+      - MAX_FILE_SIZE_MB=5
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    container_name: propagent-db
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:

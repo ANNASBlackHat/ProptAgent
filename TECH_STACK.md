@@ -1,0 +1,10 @@
+- Frontend: Next.js 14 (App Router, TypeScript)
+- Backend: Next.js API Routes (no separate Express server)
+- Database: MongoDB 7 via Mongoose 8
+- Auth: JWT (jsonwebtoken) + bcrypt, stored in httpOnly cookies
+- AI: OpenAI SDK (model: gpt-4o-mini, configurable via env)
+- File Storage: local /public/uploads (v1 only)
+- Email: Nodemailer with SMTP (configured via env)
+- Styling: Tailwind CSS v3
+- State: React Context for auth, SWR for data fetching
+- Deployment: Docker Compose (Node 20 Alpine image)
