@@ -1,23 +1,56 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+interface TenantLeaseSummary {
+  _id: string;
+  startDate: string;
+  endDate: string;
+  monthlyRent: number;
+  propertyId: { name: string; address: { city: string; state: string } };
+  unitId: { unitNumber: string };
+}
 
 export default function TenantDashboard() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading: authLoading, logout } = useAuth();
   const router = useRouter();
 
+  const [lease, setLease] = useState<TenantLeaseSummary | null>(null);
+  const [isLoadingLease, setIsLoadingLease] = useState(true);
+
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'tenant')) {
+    if (!authLoading && (!user || user.role !== 'tenant')) {
       router.replace('/login');
     }
-  }, [user, isLoading, router]);
+  }, [user, authLoading, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (authLoading || !user || user.role !== 'tenant') return;
+
+    const fetchLease = async () => {
+      try {
+        const res = await fetch('/api/tenant/lease');
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setLease(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching tenant lease:', err);
+      } finally {
+        setIsLoadingLease(false);
+      }
+    };
+
+    fetchLease();
+  }, [user, authLoading]);
+
+  if (authLoading || (isLoadingLease && user?.role === 'tenant')) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
@@ -46,7 +79,7 @@ export default function TenantDashboard() {
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-slate-200">{user?.name}</p>
-              <p className="text-xs text-slate-500">Tenant Account</p>
+              <p className="text-xs text-slate-550">Tenant Account</p>
             </div>
             <button
               onClick={logout}
@@ -59,12 +92,12 @@ export default function TenantDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-16 flex-1 flex flex-col justify-center relative z-10 w-full">
+      <main className="max-w-4xl mx-auto px-6 py-12 flex-1 flex flex-col justify-center relative z-10 w-full space-y-8">
         <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl shadow-2xl space-y-6">
           <div className="space-y-2">
             <h1 className="text-3xl font-extrabold text-slate-100">Welcome, {user?.name}</h1>
             <p className="text-slate-400 text-sm">
-              Your tenant portal is active. From here, you will be able to complete screening interviews, view lease agreements, and submit maintenance requests.
+              Your tenant portal is active. Manage your lease terms and submit maintenance requests below.
             </p>
           </div>
 
@@ -80,14 +113,61 @@ export default function TenantDashboard() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/50 text-slate-400 text-xs">
-            Currently, you do not have any active leases or pending screening invitations. Once your landlord registers a lease or screening, it will appear here.
-          </div>
+          {/* Action Cards Grid */}
+          {lease ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+              {/* Lease Card */}
+              <Link
+                href="/tenant/lease"
+                className="p-6 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-emerald-500/40 transition-all duration-350 hover:shadow-lg hover:shadow-emerald-500/5 group flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">📄</span>
+                    <h3 className="font-bold text-slate-200 group-hover:text-emerald-400 transition-colors">
+                      My Lease Agreement
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    View your lease terms, monthly rent ledger, security deposit, and signed documents for {lease.propertyId.name}, Unit {lease.unitId.unitNumber}.
+                  </p>
+                </div>
+                <div className="text-xs text-emerald-450 font-semibold flex items-center gap-1">
+                  View Lease Details <span className="transition-transform group-hover:translate-x-1">→</span>
+                </div>
+              </Link>
+
+              {/* Maintenance Card */}
+              <Link
+                href="/tenant/maintenance"
+                className="p-6 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-emerald-500/40 transition-all duration-350 hover:shadow-lg hover:shadow-emerald-500/5 group flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🔧</span>
+                    <h3 className="font-bold text-slate-200 group-hover:text-emerald-400 transition-colors">
+                      Maintenance Portal
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Report issues with plumbing, electricity, heating, or appliances, upload photos, and track repair progress in real-time.
+                  </p>
+                </div>
+                <div className="text-xs text-emerald-450 font-semibold flex items-center gap-1">
+                  Go to Maintenance <span className="transition-transform group-hover:translate-x-1">→</span>
+                </div>
+              </Link>
+            </div>
+          ) : (
+            <div className="p-6 rounded-xl bg-slate-900/60 border border-slate-800/50 text-slate-400 text-xs">
+              Currently, you do not have any active leases or pending screening invitations. Once your landlord registers a lease or screening, it will appear here.
+            </div>
+          )}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-slate-800/60 text-center text-xs text-slate-500">
+      <footer className="py-6 border-t border-slate-800/60 text-center text-xs text-slate-550">
         PropAgent • Tenant Portal Active
       </footer>
     </div>

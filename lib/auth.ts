@@ -19,7 +19,8 @@ export interface AuthenticatedRequest extends NextRequest {
 
 export type RouteHandler = (
   req: AuthenticatedRequest,
-  context: unknown
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  context: any
 ) => Promise<Response> | Response;
 
 /**

@@ -6,11 +6,11 @@ import MaintenanceRequest from '@/models/MaintenanceRequest';
 // GET /api/maintenance/[id] — Get single maintenance request detail (Landlord or Tenant)
 async function getMaintenanceRequest(
   req: AuthenticatedRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
-    const { id } = params;
+    const { id } = await context.params;
     const { userId, role } = req.user!;
 
     let query = MaintenanceRequest.findById(id)
@@ -38,9 +38,8 @@ async function getMaintenanceRequest(
     // Authorization checks
     if (role === 'tenant') {
       // Tenants can only view their own requests
-      const tenantIdStr = (request.tenantId as any)._id
-        ? (request.tenantId as any)._id.toString()
-        : request.tenantId.toString();
+      const tenantObj = request.tenantId as unknown as { _id?: { toString(): string } };
+      const tenantIdStr = tenantObj?._id ? tenantObj._id.toString() : request.tenantId.toString();
 
       if (tenantIdStr !== userId) {
         return NextResponse.json(

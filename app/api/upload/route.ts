@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
 import formidable, { File } from 'formidable';
+import { Readable } from 'stream';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 
 // Disable Next.js built-in body parsing so formidable can handle multipart
@@ -35,7 +36,6 @@ function parseForm(
       .arrayBuffer()
       .then((buf) => {
         // Build a minimal Node-compatible stream from the buffer
-        const { Readable } = require('stream');
         const stream = new Readable();
         stream.push(Buffer.from(buf));
         stream.push(null);

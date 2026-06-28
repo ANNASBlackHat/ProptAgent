@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import mongoose, { FilterQuery } from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
-import MaintenanceRequest from '@/models/MaintenanceRequest';
+import MaintenanceRequest, { IMaintenanceRequest } from '@/models/MaintenanceRequest';
 import Lease from '@/models/Lease';
 import User from '@/models/User';
 import Property from '@/models/Property';
@@ -24,16 +25,15 @@ async function listMaintenanceRequests(req: AuthenticatedRequest) {
     const skip = (page - 1) * limit;
 
     // Landlords can only view requests for their properties
-    const query: any = { landlordId };
+    const query: FilterQuery<IMaintenanceRequest> = { landlordId: new mongoose.Types.ObjectId(landlordId) };
 
     if (status) query.status = status;
     if (urgency) query.urgency = urgency;
     if (propertyId) query.propertyId = new mongoose.Types.ObjectId(propertyId);
     if (category) query.category = category;
 
-    const mongoose = require('mongoose');
     // Convert landlordId to ObjectId for aggregation match
-    const matchQuery: any = { landlordId: new mongoose.Types.ObjectId(landlordId) };
+    const matchQuery: FilterQuery<IMaintenanceRequest> = { landlordId: new mongoose.Types.ObjectId(landlordId) };
     if (status) matchQuery.status = status;
     if (urgency) matchQuery.urgency = urgency;
     if (propertyId) matchQuery.propertyId = new mongoose.Types.ObjectId(propertyId);
@@ -208,9 +208,9 @@ async function createMaintenanceRequest(req: AuthenticatedRequest) {
     }
 
     return NextResponse.json({ success: true, data: newRequest }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST /api/maintenance error:', error);
-    if (error.name === 'ValidationError') {
+    if (error instanceof Error && error.name === 'ValidationError') {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
