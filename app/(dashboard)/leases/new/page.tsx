@@ -75,7 +75,7 @@ function CreateLeaseFormInner() {
       .then((r) => r.json())
       .then((d) => {
         if (d.success && d.data) {
-          const app = d.data.application;
+          const app = d.data;
           setSelectedApp(app);
           // Pre-fill rent and deposit from unit details
           if (app.unitId) {
