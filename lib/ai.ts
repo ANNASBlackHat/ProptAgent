@@ -1,12 +1,17 @@
 import OpenAI from 'openai';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const AI_MODEL = process.env.AI_MODEL || 'gpt-4o-mini';
+const AI_API_KEY = process.env.AI_API_KEY;
+const AI_BASE_URL = process.env.AI_BASE_URL;
+
+console.log('[AI Init] Base URL:', AI_BASE_URL || 'default (OpenAI)');
+console.log('[AI Init] Model:', process.env.AI_MODEL || 'gpt-4o-mini');
+console.log('[AI Init] API Key configured:', !!AI_API_KEY);
 
 // Initialize the OpenAI client. We fall back to a dummy key to prevent crashes 
 // during build-time or before the buyer enters their key.
 const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY || 'dummy-key-to-prevent-build-errors',
+  apiKey: AI_API_KEY || 'dummy-key-to-prevent-build-errors',
+  baseURL: AI_BASE_URL || undefined,
 });
 
 export interface AIMessage {
@@ -21,9 +26,12 @@ export interface AIMessage {
  */
 export async function callAI(
   messages: AIMessage[],
-  systemPrompt?: string
+  systemPrompt?: string,
+  options?: { responseFormat?: 'json_object' | 'text' }
 ): Promise<string> {
   try {
+    console.log(`[AI Call] Sending ${messages.length} messages. System prompt length: ${systemPrompt?.length || 0}`);
+    
     const formattedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
     if (systemPrompt) {
@@ -41,13 +49,21 @@ export async function callAI(
     });
 
     const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+      model: process.env.AI_MODEL || 'gpt-4o-mini',
       messages: formattedMessages,
+      response_format: options?.responseFormat ? { type: options.responseFormat } : undefined,
     });
 
-    return completion.choices[0]?.message?.content || '';
+    const response = completion.choices[0]?.message?.content || '';
+    console.log(`[AI Call] Success. Response length: ${response.length} chars.`);
+    return response;
   } catch (error) {
-    console.error('OpenAI API call failed:', error);
+    console.error('[AI Call] OpenAI API call failed. Connection Configuration:', {
+      baseURL: AI_BASE_URL || 'default',
+      model: process.env.AI_MODEL || 'gpt-4o-mini',
+      apiKeyLength: AI_API_KEY?.length || 0,
+    });
+    console.error('[AI Call] Error details:', error);
     throw error;
   }
 }

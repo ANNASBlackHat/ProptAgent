@@ -9,9 +9,15 @@ MONGODB_URI=mongodb://localhost:27017/propagent
 JWT_SECRET=<random 64 char string>
 JWT_EXPIRES_IN=7d
 
-# AI (buyer provides their own key)
-OPENAI_API_KEY=<buyer fills this>
+# AI Config
+AI_PROVIDER=openai
+AI_BASE_URL=
+AI_API_KEY=<buyer fills this>
 AI_MODEL=gpt-4o-mini
+# OpenAI:      AI_BASE_URL= (leave empty), AI_MODEL=gpt-4o-mini
+# OpenRouter:  AI_BASE_URL=https://openrouter.ai/api/v1, AI_MODEL=anthropic/claude-3-haiku
+# Gemini:      AI_BASE_URL=https://generativelanguage.googleapis.com/openai/v1, AI_MODEL=gemini-1.5-flash
+# Ollama:      AI_BASE_URL=http://localhost:11434/v1, AI_API_KEY=ollama, AI_MODEL=llama3
 
 # Email (buyer configures their SMTP)
 SMTP_HOST=smtp.gmail.com
