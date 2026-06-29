@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import LeaseStatusBadge from '@/components/LeaseStatusBadge';
 import { LeaseStatus, PaymentMethod } from '@/models/Lease';
@@ -32,8 +32,9 @@ interface LeaseDetail {
   unitId: { _id: string; unitNumber: string; type: string };
 }
 
-export default function LeaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function LeaseDetailPage() {
+  const params = useParams();
+  const id = params?.id as string;
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -62,7 +63,7 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch Lease Details
-  const fetchLease = async () => {
+  const fetchLease = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -78,16 +79,16 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
         setRenewEndDate(data.data.endDate.split('T')[0]);
         setRenewRent(String(data.data.monthlyRent));
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load lease');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load lease');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchLease();
-  }, [id]);
+  }, [fetchLease]);
 
   // Auth guard
   useEffect(() => {
@@ -150,8 +151,8 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
       if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update');
       setLease(data.data);
       setActiveModal(null);
-    } catch (err: any) {
-      alert(err.message || 'Error updating lease');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error updating lease');
     } finally {
       setSubmitting(false);
     }
@@ -174,8 +175,8 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
       if (!res.ok || !data.success) throw new Error(data.error || 'Failed to renew');
       setLease(data.data);
       setActiveModal(null);
-    } catch (err: any) {
-      alert(err.message || 'Error renewing lease');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error renewing lease');
     } finally {
       setSubmitting(false);
     }
@@ -211,8 +212,8 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
       setPayAmount('');
       setPayMethod('bank_transfer');
       setPayNotes('');
-    } catch (err: any) {
-      alert(err.message || 'Error logging payment');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error logging payment');
     } finally {
       setSubmitting(false);
     }
@@ -238,8 +239,8 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
       await fetchLease();
       setActiveModal(null);
       setTermReason('');
-    } catch (err: any) {
-      alert(err.message || 'Error terminating lease');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error terminating lease');
     } finally {
       setSubmitting(false);
     }
@@ -276,8 +277,8 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
 
       // Refresh lease details
       await fetchLease();
-    } catch (err: any) {
-      setUploadError(err.message || 'Error uploading document');
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : 'Error uploading document');
     } finally {
       setUploadingDoc(false);
       // Clear file input
@@ -621,7 +622,7 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
               <div className="p-6 rounded-2xl bg-red-950/10 border border-red-900/20 shadow-xl space-y-4">
                 <h2 className="text-base font-bold text-red-400">Danger Zone</h2>
                 <p className="text-xs text-slate-400 leading-normal">
-                  Terminating the lease early will immediately update the status to "Terminated" and make the rental unit available for new applicants. This action is permanent.
+                  Terminating the lease early will immediately update the status to &quot;Terminated&quot; and make the rental unit available for new applicants. This action is permanent.
                 </p>
                 <button
                   type="button"
@@ -698,7 +699,7 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
             </div>
             <form onSubmit={handleRenewSubmit} className="space-y-4">
               <p className="text-xs text-slate-400 leading-relaxed">
-                Extend the lease end date. If the lease was expiring soon or expired, it will automatically reset to "Active".
+                Extend the lease end date. If the lease was expiring soon or expired, it will automatically reset to &quot;Active&quot;.
               </p>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -855,7 +856,7 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
             </div>
             <form onSubmit={handleTerminateSubmit} className="space-y-4">
               <p className="text-xs text-slate-450 leading-relaxed">
-                Are you sure you want to terminate this lease? This will release the tenant and mark the unit as "Available". This action is irreversible.
+                Are you sure you want to terminate this lease? This will release the tenant and mark the unit as &quot;Available&quot;. This action is irreversible.
               </p>
               <div className="space-y-2">
                 <label htmlFor="terminate-reason" className="block text-sm font-medium text-slate-450">

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CategoryIcon from '@/components/CategoryIcon';
 import UrgencyBadge from '@/components/UrgencyBadge';
+import TenantNav from '@/components/TenantNav';
 import { MaintenanceCategory, MaintenanceUrgency, MaintenanceStatus } from '@/models/MaintenanceRequest';
 
 interface MaintenanceRequestItem {
@@ -60,7 +61,7 @@ function MaintenanceStatusBadge({ status }: { status: MaintenanceStatus }) {
 }
 
 export default function TenantMaintenancePage() {
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const [requests, setRequests] = useState<MaintenanceRequestItem[]>([]);
@@ -111,36 +112,12 @@ export default function TenantMaintenancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between overflow-hidden relative">
+    <div className="min-h-screen bg-slate-950 text-slate-100 relative">
       {/* Background gradients */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-600/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-600/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-600/8 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Header */}
-      <header className="border-b border-slate-800/80 bg-slate-900/30 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Link href="/tenant" className="text-2xl font-black bg-gradient-to-r from-emerald-400 via-teal-200 to-blue-400 bg-clip-text text-transparent">
-              PropAgent
-            </Link>
-            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold tracking-wide uppercase">
-              Tenant Portal
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-slate-200">{user?.name}</p>
-              <p className="text-xs text-slate-550">Tenant Account</p>
-            </div>
-            <button
-              onClick={logout}
-              className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700/50 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
+      <TenantNav />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1 w-full relative z-10 space-y-6">
@@ -250,10 +227,6 @@ export default function TenantMaintenancePage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 border-t border-slate-800/60 text-center text-xs text-slate-500 relative z-10">
-        PropAgent • Tenant Portal Active
-      </footer>
     </div>
   );
 }
