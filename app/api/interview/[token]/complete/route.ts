@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import Application from '@/models/Application';
-import { runScoring } from '@/lib/scoring';
 
 export async function POST(
   req: NextRequest,

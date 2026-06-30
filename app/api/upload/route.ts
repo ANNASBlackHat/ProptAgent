@@ -45,9 +45,9 @@ function parseForm(
         req.headers.forEach((value, key) => {
           headers[key] = value;
         });
-        (stream as Record<string, unknown>).headers = headers;
-        (stream as Record<string, unknown>).method = req.method;
-        (stream as Record<string, unknown>).url = req.url;
+        (stream as unknown as Record<string, unknown>).headers = headers;
+        (stream as unknown as Record<string, unknown>).method = req.method;
+        (stream as unknown as Record<string, unknown>).url = req.url;
 
         form.parse(stream as unknown as import('http').IncomingMessage, (err, _fields, files) => {
           if (err) return reject(err);

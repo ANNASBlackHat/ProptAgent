@@ -141,6 +141,7 @@ export default function ApplicationDetailPage() {
 
     if (!needsPolling) return;
 
+    // eslint-disable-next-line prefer-const
     let intervalId: NodeJS.Timeout;
 
     const pollScore = async () => {

@@ -8,6 +8,7 @@ import { SCORING_SYSTEM_PROMPT } from './prompts';
  * Calls the OpenAI API to perform actual scoring.
  * @param applicationId - The ID of the application to score
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function runScoring(applicationId: string): Promise<any> {
   await dbConnect();
   
@@ -35,6 +36,7 @@ export async function runScoring(applicationId: string): Promise<any> {
   }
 
   // Format form data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rentAmount = (application.unitId as any)?.rentAmount || 0;
   const formData = {
     tenantInfo: {

@@ -21,6 +21,7 @@ async function listLeases(req: AuthenticatedRequest) {
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const skip = (page - 1) * limit;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = { landlordId };
     if (status) {
       query.status = status;
@@ -138,6 +139,7 @@ async function createLease(req: AuthenticatedRequest) {
     application.statusHistory.push({
       status: 'approved',
       changedAt: new Date(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       changedBy: landlordId as any,
       note: 'Lease agreement created and finalized.',
     });
@@ -224,6 +226,7 @@ async function createLease(req: AuthenticatedRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     console.error('POST /api/leases error:', error);
     if (error.name === 'ValidationError') {
       return NextResponse.json(

@@ -52,6 +52,7 @@ async function logPayment(
       method,
       notes: notes || '',
       loggedAt: new Date(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       loggedBy: landlordId as any,
     });
 

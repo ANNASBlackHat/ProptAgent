@@ -19,7 +19,6 @@ export default function TenantInterviewPage() {
   const [applicantName, setApplicantName] = useState('');
   const [propertyName, setPropertyName] = useState('');
   const [unitNumber, setUnitNumber] = useState('');
-  const [interviewStatus, setInterviewStatus] = useState('');
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -54,7 +53,6 @@ export default function TenantInterviewPage() {
         setApplicantName(data.data.applicantName);
         setPropertyName(data.data.propertyName);
         setUnitNumber(data.data.unitNumber);
-        setInterviewStatus(data.data.interviewStatus);
         setMessages(data.data.aiTranscript || []);
 
         if (data.data.interviewStatus === 'completed') {
@@ -75,12 +73,14 @@ export default function TenantInterviewPage() {
           triggerFirstGreeting();
         }
       } catch (err: any) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setError(err.message || 'An error occurred');
         setLoading(false);
       }
     };
 
     fetchInterview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // Automatically trigger the first AI message
@@ -154,6 +154,7 @@ export default function TenantInterviewPage() {
         setIsComplete(true);
       }
     } catch (err: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       alert(err.message || 'Failed to get response. Please try again.');
     } finally {
       setIsSending(false);
@@ -175,6 +176,7 @@ export default function TenantInterviewPage() {
 
       setCompletedScreen(true);
     } catch (err: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       alert(err.message || 'Failed to complete. Please try again.');
     } finally {
       setIsSending(false);
@@ -258,7 +260,7 @@ export default function TenantInterviewPage() {
         <div className="space-y-4 flex-1">
           {/* Welcome Message */}
           <div className="bg-slate-900/40 border border-slate-800/50 rounded-2xl p-4 text-center text-xs text-slate-400 max-w-lg mx-auto my-4">
-            👋 Welcome, <strong className="text-slate-200">{applicantName}</strong>. This chat is your screening interview. Please answer the AI assistant's questions as accurately as possible.
+            👋 Welcome, <strong className="text-slate-200">{applicantName}</strong>. This chat is your screening interview. Please answer the AI assistant&apos;s questions as accurately as possible.
           </div>
 
           {/* Messages */}

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import mongoose, { FilterQuery } from 'mongoose';
+import mongoose from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import MaintenanceRequest, { IMaintenanceRequest } from '@/models/MaintenanceRequest';
@@ -25,7 +25,7 @@ async function listMaintenanceRequests(req: AuthenticatedRequest) {
     const skip = (page - 1) * limit;
 
     // Landlords can only view requests for their properties
-    const query: FilterQuery<IMaintenanceRequest> = { landlordId: new mongoose.Types.ObjectId(landlordId) };
+    const query: Record<string, any> = { landlordId: new mongoose.Types.ObjectId(landlordId) };
 
     if (status) query.status = status;
     if (urgency) query.urgency = urgency;
@@ -33,7 +33,7 @@ async function listMaintenanceRequests(req: AuthenticatedRequest) {
     if (category) query.category = category;
 
     // Convert landlordId to ObjectId for aggregation match
-    const matchQuery: FilterQuery<IMaintenanceRequest> = { landlordId: new mongoose.Types.ObjectId(landlordId) };
+    const matchQuery: Record<string, any> = { landlordId: new mongoose.Types.ObjectId(landlordId) };
     if (status) matchQuery.status = status;
     if (urgency) matchQuery.urgency = urgency;
     if (propertyId) matchQuery.propertyId = new mongoose.Types.ObjectId(propertyId);

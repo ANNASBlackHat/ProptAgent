@@ -1,37 +1,54 @@
 import nodemailer from 'nodemailer';
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || 'noreply@propagent.com';
-
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: SMTP_PORT === 465,
-  auth: SMTP_USER && SMTP_PASS ? {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  } : undefined,
-});
-
 /**
- * Send an email using SMTP
- * @param to - Recipient email address
- * @param subject - Email subject line
- * @param html - HTML body of the email
+ * Get a configured Nodemailer transporter.
+ * Reads SMTP settings from SystemSettings first, falls back to env vars.
  */
-export async function sendEmail(to: string, subject: string, html: string): Promise<unknown> {
-  const mailOptions = {
-    from: SMTP_FROM,
-    to,
-    subject,
-    html,
-  };
+async function getTransporter(): Promise<{ transporter: nodemailer.Transporter; from: string }> {
+  let smtpHost = process.env.SMTP_HOST || '';
+  let smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+  let smtpUser = process.env.SMTP_USER || '';
+  let smtpPass = process.env.SMTP_PASS || '';
+  let smtpFrom = process.env.SMTP_FROM || 'noreply@propagent.com';
 
   try {
-    return await transporter.sendMail(mailOptions);
+    const { dbConnect } = await import('@/lib/db');
+    const { default: SystemSettings, decryptField } = await import('@/models/SystemSettings');
+    await dbConnect();
+    const settings = await SystemSettings.getSingleton();
+
+    if (settings.smtpHost) smtpHost = settings.smtpHost;
+    if (settings.smtpPort) smtpPort = parseInt(settings.smtpPort, 10);
+    if (settings.smtpUser) smtpUser = settings.smtpUser;
+    if (settings.smtpPass) {
+      const decrypted = decryptField(settings.smtpPass);
+      if (decrypted) smtpPass = decrypted;
+    }
+    if (settings.smtpFrom) smtpFrom = settings.smtpFrom;
+  } catch {
+    // Fall back to env vars silently
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    auth:
+      smtpUser && smtpPass
+        ? { user: smtpUser, pass: smtpPass }
+        : undefined,
+  });
+
+  return { transporter, from: smtpFrom };
+}
+
+/**
+ * Send an email using SMTP (reads config from SystemSettings or env)
+ */
+export async function sendEmail(to: string, subject: string, html: string): Promise<unknown> {
+  const { transporter, from } = await getTransporter();
+  try {
+    return await transporter.sendMail({ from, to, subject, html });
   } catch (error) {
     console.error('Email service error:', error);
     throw error;

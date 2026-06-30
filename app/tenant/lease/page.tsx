@@ -48,6 +48,7 @@ export default function TenantLeasePage() {
       }
       setLease(data.data);
     } catch (err: any) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setError(err.message || 'Failed to load lease');
     } finally {
       setIsLoading(false);
@@ -138,7 +139,7 @@ export default function TenantLeasePage() {
             </div>
             <h1 className="text-xl font-bold text-slate-250">No Active Lease</h1>
             <p className="text-slate-400 text-sm">
-              We couldn't find an active lease agreement linked to your account. Please contact your landlord to register your lease.
+              We couldn&apos;t find an active lease agreement linked to your account. Please contact your landlord to register your lease.
             </p>
           </div>
         ) : (

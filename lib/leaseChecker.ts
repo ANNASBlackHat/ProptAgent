@@ -29,9 +29,13 @@ export async function checkExpiringLeases(): Promise<{
     expiringCount++;
 
     // Send email to landlord
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const landlord = lease.landlordId as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tenant = lease.tenantId as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const property = lease.propertyId as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const unit = lease.unitId as any;
 
     if (landlord && landlord.email) {
