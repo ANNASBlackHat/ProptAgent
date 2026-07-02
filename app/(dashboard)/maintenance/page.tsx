@@ -344,22 +344,66 @@ export default function LandlordMaintenancePage() {
           )}
 
           {!error && isLoading && (
-            <div className="py-20 flex justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500" />
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800/80 bg-slate-950/20 text-slate-400 font-semibold text-left">
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Unit / Property</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Tenant</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Title</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Urgency</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Submitted</th>
+                    <th className="px-6 py-4 text-right text-xs uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <tr key={n} className="animate-pulse">
+                      <td className="px-6 py-4 space-y-2">
+                        <div className="h-4 w-20 bg-slate-800/60 rounded" />
+                        <div className="h-3.5 w-32 bg-slate-900 rounded" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-28 bg-slate-800/60 rounded" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-5 w-20 bg-slate-800/60 rounded" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-40 bg-slate-800/60 rounded" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-6 w-16 bg-slate-800/60 rounded-full" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-6 w-20 bg-slate-800/60 rounded-full" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-16 bg-slate-800/60 rounded" />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="inline-block h-8 w-16 bg-slate-800/60 rounded-lg" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
           {!error && !isLoading && requests.length === 0 && (
-            <div className="py-20 flex flex-col items-center gap-3 text-center px-4">
-              <div className="w-12 h-12 rounded-full bg-slate-800/60 flex items-center justify-center text-slate-500 mb-2">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="py-20 flex flex-col items-center gap-4 text-center px-4 animate-[fadeIn_0.3s_ease-out]">
+              <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-center text-slate-500">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <p className="text-slate-400 font-medium">No maintenance requests found</p>
-              <p className="text-slate-555 text-xs max-w-xs">
-                No active requests match your selected filters.
-              </p>
+              <div>
+                <p className="text-slate-350 font-semibold text-lg">No maintenance requests. All quiet!</p>
+                <p className="text-slate-500 text-sm mt-1 max-w-sm">No maintenance requests match your current filters.</p>
+              </div>
             </div>
           )}
 

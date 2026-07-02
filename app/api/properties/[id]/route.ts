@@ -4,6 +4,7 @@ import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Property from '@/models/Property';
 import Unit from '@/models/Unit';
+import { sanitizeObject } from '@/lib/sanitize';
 
 // GET /api/properties/[id] — get single property with its units
 async function getProperty(req: AuthenticatedRequest, context: unknown) {
@@ -44,7 +45,8 @@ async function updateProperty(req: AuthenticatedRequest, context: unknown) {
       return NextResponse.json({ success: false, error: 'Invalid property ID' }, { status: 400 });
     }
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = sanitizeObject(rawBody);
 
     // Strip protected fields
     delete body.landlordId;

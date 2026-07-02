@@ -115,11 +115,77 @@ export default function LandlordDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-          <p className="text-slate-400 text-sm animate-pulse">Loading dashboard…</p>
-        </div>
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <header className="border-b border-slate-800/80 bg-slate-950 px-6 py-4">
+          <div className="space-y-2">
+            <div className="h-6 w-32 bg-slate-900 rounded-lg animate-pulse" />
+            <div className="h-4 w-48 bg-slate-900 rounded animate-pulse" />
+          </div>
+        </header>
+
+        <main className="flex-1 p-6 space-y-8 relative z-10 animate-pulse">
+          {/* Summary Cards Grid */}
+          <div>
+            <div className="h-4 w-36 bg-slate-900 rounded mb-4" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className="p-5 rounded-2xl bg-slate-900 border border-slate-800/80 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div className="w-6 h-6 rounded-full bg-slate-800/60" />
+                    <div className="w-16 h-3 bg-slate-800/60 rounded" />
+                  </div>
+                  <div className="h-8 w-12 bg-slate-800/60 rounded" />
+                  <div className="h-3 w-16 bg-slate-800/60 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity Skeleton */}
+          <div>
+            <div className="h-4 w-32 bg-slate-900 rounded mb-4" />
+            <div className="rounded-2xl bg-slate-900 border border-slate-800/80 divide-y divide-slate-800/40 overflow-hidden">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="p-5 flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-slate-800/60 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/4 bg-slate-800/60 rounded" />
+                    <div className="h-3.5 w-16 bg-slate-800/60 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Two-column table skeletons */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="rounded-2xl bg-slate-900 border border-slate-800/80 p-5 space-y-4">
+              <div className="h-4 w-28 bg-slate-850 rounded" />
+              <div className="space-y-3">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="flex justify-between items-center py-2 border-b border-slate-800/40 last:border-0">
+                    <div className="h-4 w-24 bg-slate-800/60 rounded" />
+                    <div className="h-4 w-32 bg-slate-800/60 rounded" />
+                    <div className="h-4 w-12 bg-slate-800/60 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900 border border-slate-800/80 p-5 space-y-4">
+              <div className="h-4 w-28 bg-slate-850 rounded" />
+              <div className="space-y-3">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="flex justify-between items-center py-2 border-b border-slate-800/40 last:border-0">
+                    <div className="h-4 w-24 bg-slate-800/60 rounded" />
+                    <div className="h-4 w-32 bg-slate-800/60 rounded" />
+                    <div className="h-4 w-12 bg-slate-800/60 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

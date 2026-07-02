@@ -4,6 +4,7 @@ import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Property from '@/models/Property';
 import Unit from '@/models/Unit';
+import { sanitizeObject } from '@/lib/sanitize';
 
 
 // GET /api/properties — list landlord's own properties with unit counts
@@ -62,12 +63,14 @@ async function getProperties(req: AuthenticatedRequest) {
   }
 }
 
+
 // POST /api/properties — create a new property
 async function createProperty(req: AuthenticatedRequest) {
   try {
     await dbConnect();
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = sanitizeObject(rawBody);
 
     const property = await Property.create({
       ...body,

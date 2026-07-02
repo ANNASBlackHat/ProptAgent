@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Lease from '@/models/Lease';
+import { sanitizeObject } from '@/lib/sanitize';
 
 // POST /api/leases/[id]/payments — Log a new rent payment
 async function logPayment(
@@ -13,7 +14,8 @@ async function logPayment(
     const landlordId = req.user!.userId;
     const { id } = await context.params;
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = sanitizeObject(rawBody);
     const { paidDate, amount, method, notes } = body;
 
     if (!paidDate || amount === undefined || !method) {

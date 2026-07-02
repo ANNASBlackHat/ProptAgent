@@ -53,12 +53,37 @@ export default function PropertiesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500" />
-          <p className="text-slate-400 text-sm animate-pulse">Loading properties…</p>
+      <main className="min-h-screen bg-slate-950 text-slate-100 px-4 py-8 sm:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div className="space-y-2">
+              <div className="h-8 w-48 bg-slate-900 rounded-xl animate-pulse" />
+              <div className="h-4 w-32 bg-slate-900 rounded animate-pulse" />
+            </div>
+            <div className="h-11 w-36 bg-slate-900 rounded-xl animate-pulse" />
+          </div>
+
+          {/* Grid Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="flex flex-col rounded-2xl overflow-hidden bg-slate-900 border border-slate-800/80 p-5 gap-4 animate-pulse">
+                <div className="h-44 bg-slate-800/60 rounded-xl" />
+                <div className="space-y-2">
+                  <div className="h-5 w-2/3 bg-slate-800/60 rounded" />
+                  <div className="h-4 w-1/2 bg-slate-800/60 rounded" />
+                </div>
+                <div className="h-px bg-slate-800/60 mt-2" />
+                <div className="flex items-center gap-4">
+                  <div className="h-8 w-12 bg-slate-800/60 rounded" />
+                  <div className="h-8 w-12 bg-slate-800/60 rounded" />
+                  <div className="flex-1 h-2 bg-slate-800/60 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -95,20 +120,20 @@ export default function PropertiesPage() {
         {/* Empty state */}
         {!error && properties.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 gap-6">
-            <div className="w-20 h-20 rounded-2xl bg-slate-800 flex items-center justify-center">
-              <svg className="w-10 h-10 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800/80 flex items-center justify-center">
+              <svg className="w-10 h-10 text-slate-650" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
               </svg>
             </div>
             <div className="text-center">
-              <p className="text-slate-300 font-semibold text-lg">No properties yet</p>
-              <p className="text-slate-500 text-sm mt-1">Add your first property to get started.</p>
+              <p className="text-slate-350 font-semibold text-lg">You haven&apos;t added any properties yet.</p>
+              <p className="text-slate-500 text-sm mt-1">Add a property to start managing units and screening tenants.</p>
             </div>
             <Link
               href="/properties/new"
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 flex items-center gap-1.5"
             >
-              Add Property
+              Add your first property <span className="text-blue-200">→</span>
             </Link>
           </div>
         )}

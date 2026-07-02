@@ -5,6 +5,8 @@ import Property from '@/models/Property';
 import Application from '@/models/Application';
 import User from '@/models/User';
 import { sendEmail } from '@/lib/email';
+import { rateLimit } from '@/lib/rateLimit';
+import { sanitizeObject } from '@/lib/sanitize';
 
 // ─── GET /api/apply/[unitId] — PUBLIC ─────────────────────────────────────────
 // Returns unit + property info for the public application form.
@@ -76,6 +78,17 @@ export async function POST(
   context: { params: Promise<{ unitId: string }> }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+
+    // Rate limiting: max 3 per IP per hour
+    const allowed = rateLimit(ip, 'apply', 3, 60 * 60 * 1000);
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Too many applications submitted from this IP. Please try again in an hour.' },
+        { status: 429 }
+      );
+    }
+
     await dbConnect();
     const { unitId } = await context.params;
 
@@ -102,7 +115,8 @@ export async function POST(
       );
     }
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = sanitizeObject(rawBody);
     const { tenantInfo, employment, references, additionalNotes } = body;
 
     // Basic validation

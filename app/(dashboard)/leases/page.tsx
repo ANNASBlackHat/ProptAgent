@@ -147,20 +147,65 @@ export default function LeasesPage() {
         {/* Table Container */}
         <div className="rounded-2xl bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl shadow-2xl overflow-hidden">
           {isLoading ? (
-            <div className="py-20 flex justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500" />
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800/80 bg-slate-950/20 text-slate-400 font-semibold text-left">
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Tenant</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Property / Unit</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Rent</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Lease Dates</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-right text-xs uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <tr key={n} className="animate-pulse">
+                      <td className="px-6 py-4 space-y-2">
+                        <div className="h-4 w-32 bg-slate-800/60 rounded" />
+                        <div className="h-3.5 w-44 bg-slate-900 rounded" />
+                      </td>
+                      <td className="px-6 py-4 space-y-2">
+                        <div className="h-4 w-36 bg-slate-800/60 rounded" />
+                        <div className="h-3.5 w-48 bg-slate-900 rounded" />
+                      </td>
+                      <td className="px-6 py-4 space-y-2">
+                        <div className="h-4 w-16 bg-slate-800/60 rounded" />
+                        <div className="h-3.5 w-12 bg-slate-900 rounded" />
+                      </td>
+                      <td className="px-6 py-4 space-y-2">
+                        <div className="h-4 w-28 bg-slate-800/60 rounded" />
+                        <div className="h-3.5 w-20 bg-slate-900 rounded" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-6 w-20 bg-slate-800/60 rounded-full" />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="inline-block h-8 w-16 bg-slate-800/60 rounded-lg" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : leases.length === 0 ? (
-            <div className="py-20 flex flex-col items-center gap-3 text-center px-4">
-              <div className="w-12 h-12 rounded-full bg-slate-800/60 flex items-center justify-center text-slate-500 mb-2">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="py-20 flex flex-col items-center gap-4 text-center px-4 animate-[fadeIn_0.3s_ease-out]">
+              <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-center text-slate-500">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                 </svg>
               </div>
-              <p className="text-slate-400 font-medium">No leases found</p>
-              <p className="text-slate-500 text-xs max-w-xs">
-                There are no {activeTab ? activeTab.replace('_', ' ') : ''} leases in this status.
-              </p>
+              <div>
+                <p className="text-slate-300 font-semibold text-base">No leases yet</p>
+                <p className="text-slate-500 text-sm mt-1 max-w-sm">Approve an application to create a lease.</p>
+              </div>
+              <Link
+                href="/applications"
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700/60 hover:border-slate-600 transition-all duration-150 active:scale-95 flex items-center gap-1"
+              >
+                Go to Applications <span className="text-slate-400">→</span>
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">

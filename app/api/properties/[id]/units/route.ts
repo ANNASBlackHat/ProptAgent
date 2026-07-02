@@ -4,6 +4,7 @@ import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Property from '@/models/Property';
 import Unit from '@/models/Unit';
+import { sanitizeObject } from '@/lib/sanitize';
 
 type Context = { params: { id: string } };
 
@@ -48,7 +49,8 @@ async function createUnit(req: AuthenticatedRequest, context: unknown) {
       return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
     }
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = sanitizeObject(rawBody);
 
     const unit = await Unit.create({
       ...body,

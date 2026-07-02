@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Unit from '@/models/Unit';
+import { sanitizeObject } from '@/lib/sanitize';
 
 type Context = { params: Promise<{ id: string }> | { id: string } };
 
@@ -32,7 +33,7 @@ async function getUnit(req: AuthenticatedRequest, context: unknown) {
     // Ownership check — super_admin can see any unit
     if (req.user!.role !== 'super_admin') {
       if (unit.landlordId && unit.landlordId.toString() !== req.user!.userId) {
-        return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
+         return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
       }
     }
 
@@ -81,7 +82,8 @@ async function updateUnit(req: AuthenticatedRequest, context: unknown) {
       }
     }
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = sanitizeObject(rawBody);
 
     // Strip protected fields
     delete body.landlordId;

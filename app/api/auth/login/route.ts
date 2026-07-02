@@ -2,13 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import User from '@/models/User';
 import { signToken } from '@/lib/auth';
+import { rateLimit } from '@/lib/rateLimit';
+import { sanitizeString } from '@/lib/sanitize';
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+
+    // Rate limiting: max 10 per IP per 15 minutes
+    const allowed = rateLimit(ip, 'login', 10, 15 * 60 * 1000);
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Too many attempts. Please try again in 15 minutes.' },
+        { status: 429 }
+      );
+    }
+
     await dbConnect();
 
     const body = await req.json();
-    const { email, password } = body;
+    const { password } = body;
+    let email = body.email;
 
     // Validation
     if (!email || !password) {
@@ -17,6 +31,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    email = sanitizeString(email);
 
     // Find user and explicitly select password
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');

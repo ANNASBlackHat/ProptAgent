@@ -197,15 +197,63 @@ export default function ApplicationsPage() {
         {/* Table */}
         <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
           {isLoading ? (
-            <div className="py-16 flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500" />
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Applicant</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Property / Unit</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Move-in</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Score</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Applied</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/50">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <tr key={n} className="animate-pulse">
+                      <td className="px-4 py-4 space-y-2">
+                        <div className="h-4 w-28 bg-slate-800/60 rounded" />
+                        <div className="h-3.5 w-40 bg-slate-900 rounded" />
+                      </td>
+                      <td className="px-4 py-4 space-y-2">
+                        <div className="h-4 w-36 bg-slate-800/60 rounded" />
+                        <div className="h-3.5 w-48 bg-slate-900 rounded" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 w-16 bg-slate-800/60 rounded" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-6 w-16 bg-slate-800/60 rounded-full" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-6 w-20 bg-slate-800/60 rounded-full" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-3.5 w-16 bg-slate-800/60 rounded" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : applications.length === 0 ? (
-            <div className="py-16 flex flex-col items-center gap-3">
-              <svg className="w-10 h-10 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
-              </svg>
-              <p className="text-slate-500 text-sm">No applications found</p>
+            <div className="py-20 flex flex-col items-center gap-4 text-center px-4 animate-[fadeIn_0.3s_ease-out]">
+              <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-center text-slate-500">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-slate-300 font-semibold text-base">No applications yet</p>
+                <p className="text-slate-500 text-sm mt-1 max-w-sm">Share your unit link to start receiving applications.</p>
+              </div>
+              <Link
+                href="/properties"
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700/60 hover:border-slate-600 transition-all duration-150 active:scale-95 flex items-center gap-1"
+              >
+                Go to Properties <span className="text-slate-400">→</span>
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">

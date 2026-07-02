@@ -8,6 +8,7 @@ import User from '@/models/User';
 import Property from '@/models/Property';
 import Unit from '@/models/Unit';
 import { sendEmail } from '@/lib/email';
+import { sanitizeObject } from '@/lib/sanitize';
 
 // GET /api/maintenance — List landlord's maintenance requests with filtering, pagination, and sorting (Urgent + Open first)
 async function listMaintenanceRequests(req: AuthenticatedRequest) {
@@ -98,7 +99,8 @@ async function createMaintenanceRequest(req: AuthenticatedRequest) {
     await dbConnect();
     const tenantId = req.user!.userId;
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = sanitizeObject(rawBody);
     const { category, urgency, title, description, photos } = body;
 
     if (!category || !urgency || !title || !description) {

@@ -72,7 +72,7 @@ function InputField({
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium text-slate-300">
-        {label}{required && <span className="text-blue-400 ml-0.5">*</span>}
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       <input
         id={id}
@@ -98,7 +98,7 @@ function SelectField({
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium text-slate-300">
-        {label}{required && <span className="text-blue-400 ml-0.5">*</span>}
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       <select
         id={id}

@@ -27,7 +27,7 @@ async function getLease(
       );
     }
 
-    if (lease.landlordId.toString() !== landlordId) {
+    if (req.user!.role !== 'super_admin' && lease.landlordId.toString() !== landlordId) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: Access denied' },
         { status: 403 }
