@@ -6,13 +6,19 @@ export interface AIMessage {
 }
 
 /**
- * Get OpenAI client — reads config from SystemSettings first, falls back to env.
- * Called per-request so settings changes take effect without restart.
+ * Helper to retrieve resolved AI configuration.
+ * SystemSettings database values take priority over .env variables.
  */
-async function getOpenAIClient(): Promise<{ client: OpenAI; model: string }> {
-  let apiKey = process.env.AI_API_KEY;
-  let model = process.env.AI_MODEL || 'gpt-4o-mini';
-  const baseURL = process.env.AI_BASE_URL;
+export async function getAIConfig(): Promise<{
+  provider: string;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+}> {
+  let provider = '';
+  let baseUrl = '';
+  let apiKey = '';
+  let model = '';
 
   try {
     // Dynamically import to avoid circular deps at build time
@@ -21,23 +27,30 @@ async function getOpenAIClient(): Promise<{ client: OpenAI; model: string }> {
     await dbConnect();
     const settings = await SystemSettings.getSingleton();
 
-    if (settings.openaiApiKey) {
-      const decrypted = decryptField(settings.openaiApiKey);
-      if (decrypted) apiKey = decrypted;
+    if (settings) {
+      provider = settings.aiProvider || '';
+      baseUrl = settings.aiBaseUrl || '';
+      model = settings.aiModel || '';
+
+      const resolvedApiKeyEncrypted = settings.aiApiKey || settings.openaiApiKey;
+      if (resolvedApiKeyEncrypted) {
+        const decrypted = decryptField(resolvedApiKeyEncrypted);
+        if (decrypted) {
+          apiKey = decrypted;
+        }
+      }
     }
-    if (settings.aiModel) {
-      model = settings.aiModel;
-    }
-  } catch {
-    // Fall back to env vars silently
+  } catch (error) {
+    console.error('[AI Config] Failed to fetch settings from DB:', error);
   }
 
-  const client = new OpenAI({
-    apiKey: apiKey || 'dummy-key-to-prevent-build-errors',
-    baseURL: baseURL || undefined,
-  });
+  // Resolve config: SystemSettings values take priority over .env vars
+  provider = provider || process.env.AI_PROVIDER || 'openai';
+  baseUrl = baseUrl !== undefined && baseUrl !== '' ? baseUrl : (process.env.AI_BASE_URL || '');
+  apiKey = apiKey || process.env.AI_API_KEY || '';
+  model = model || process.env.AI_MODEL || 'gpt-4o-mini';
 
-  return { client, model };
+  return { provider, baseUrl, apiKey, model };
 }
 
 /**
@@ -50,7 +63,16 @@ export async function callAI(
   systemPrompt?: string,
   options?: { responseFormat?: 'json_object' | 'text' }
 ): Promise<string> {
-  const { client, model } = await getOpenAIClient();
+  const { baseUrl, apiKey, model } = await getAIConfig();
+
+  if (!apiKey) {
+    throw new Error('AI API key is not configured');
+  }
+
+  const client = new OpenAI({
+    apiKey: apiKey,
+    baseURL: baseUrl || undefined,
+  });
 
   try {
     console.log(`[AI Call] Sending ${messages.length} messages. Model: ${model}`);

@@ -114,6 +114,9 @@ PropAgent sends emails when application screening completes, leases are generate
 ## 🤖 AI Configuration (OpenAI)
 
 The screening agent relies on OpenAI API completions. 
+
+PropAgent supports any OpenAI-compatible AI provider. After first login, go to Admin → Settings → AI Config to configure your provider, API key, and model. Supported out of the box: OpenAI, OpenRouter (access 100+ models), Google Gemini, and any custom OpenAI-compatible endpoint.
+
 - **Voice/Chat Screening**: The system prompt is configured dynamically under `lib/prompts.ts` using modern screening practices.
 - **Scoring**: Applications are assessed and flagged based on employment, income-to-rent ratio, reference verification results, and rental history matching the landlord's screening criteria.
 

@@ -55,6 +55,9 @@ export interface IEmailTemplates {
 export interface ISystemSettings extends Document {
   appName: string;
   appLogo: string;
+  aiProvider: string;
+  aiBaseUrl: string;
+  aiApiKey: string; // stored encrypted
   aiModel: string;
   openaiApiKey: string; // stored encrypted
   smtpHost: string;
@@ -105,6 +108,9 @@ const SystemSettingsSchema = new Schema<ISystemSettings>(
   {
     appName: { type: String, default: 'PropAgent' },
     appLogo: { type: String, default: '' },
+    aiProvider: { type: String, default: 'openai' },
+    aiBaseUrl: { type: String, default: '' },
+    aiApiKey: { type: String, default: '' }, // stored encrypted
     aiModel: { type: String, default: 'gpt-4o-mini' },
     openaiApiKey: { type: String, default: '' }, // stored encrypted
     smtpHost: { type: String, default: '' },
@@ -132,6 +138,9 @@ SystemSettingsSchema.statics.getSingleton = async function (): Promise<ISystemSe
   if (!settings) {
     settings = await this.create({
       appName: process.env.APP_NAME || 'PropAgent',
+      aiProvider: process.env.AI_PROVIDER || 'openai',
+      aiBaseUrl: process.env.AI_BASE_URL || '',
+      aiApiKey: process.env.AI_API_KEY ? encryptField(process.env.AI_API_KEY) : '',
       openaiApiKey: process.env.AI_API_KEY ? encryptField(process.env.AI_API_KEY) : '',
       aiModel: process.env.AI_MODEL || 'gpt-4o-mini',
       smtpHost: process.env.SMTP_HOST || '',

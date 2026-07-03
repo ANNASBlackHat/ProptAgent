@@ -12,6 +12,10 @@ interface EmailTemplate {
 interface Settings {
   appName: string;
   appLogo: string;
+  aiProvider: string;
+  aiBaseUrl: string;
+  aiApiKey: string;
+  aiApiKeyConfigured: boolean;
   aiModel: string;
   openaiApiKey: string;
   openaiApiKeyConfigured: boolean;
@@ -166,29 +170,88 @@ function AITab({
   onChange,
   onSave,
   saving,
+  showToast,
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onSave: () => void;
   saving: boolean;
+  showToast: (message: string, type: 'success' | 'error') => void;
 }) {
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    provider?: string;
+    model?: string;
+    response?: string;
+    error?: string;
+  } | null>(null);
+
+  const getSuggestedModelPlaceholder = (provider: string) => {
+    switch (provider) {
+      case 'openrouter':
+        return 'anthropic/claude-3-haiku';
+      case 'gemini':
+        return 'gemini-1.5-flash';
+      case 'custom':
+        return 'enter model name';
+      case 'openai':
+      default:
+        return 'gpt-4o-mini';
+    }
+  };
+
+  const handleProviderChange = (provider: string) => {
+    let baseUrl = '';
+    if (provider === 'openai') {
+      baseUrl = '';
+    } else if (provider === 'openrouter') {
+      baseUrl = 'https://openrouter.ai/api/v1';
+    } else if (provider === 'gemini') {
+      baseUrl = 'https://generativelanguage.googleapis.com/openai/v1';
+    } else if (provider === 'custom') {
+      baseUrl = '';
+    }
+
+    onChange({
+      aiProvider: provider,
+      aiBaseUrl: baseUrl,
+    });
+  };
 
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
     try {
-      const res = await fetch('/api/admin/settings/test-ai', { method: 'POST' });
+      const res = await fetch('/api/admin/settings/test-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
       const data = await res.json();
       if (data.success) {
-        setTestResult({ success: true, message: `AI responded: "${data.data.response}" (${data.data.model})` });
+        setTestResult({
+          success: true,
+          provider: data.data.provider,
+          model: data.data.model,
+          response: data.data.response,
+        });
+        showToast('Connected! Model responded correctly', 'success');
       } else {
-        setTestResult({ success: false, message: data.error || 'Test failed' });
+        const errorMsg = data.error || 'Test failed';
+        setTestResult({
+          success: false,
+          error: errorMsg,
+        });
+        showToast(errorMsg, 'error');
       }
-    } catch {
-      setTestResult({ success: false, message: 'Network error' });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Network error';
+      setTestResult({
+        success: false,
+        error: errMsg,
+      });
+      showToast('Network error', 'error');
     } finally {
       setTesting(false);
     }
@@ -196,35 +259,66 @@ function AITab({
 
   return (
     <div className="space-y-5">
-      <SectionHeader title="AI Configuration" desc="Configure the OpenAI model and API key used for tenant screening" />
-      <Field label="AI Model">
-        <select
-          id="settings-ai-model"
-          value={settings.aiModel}
-          onChange={(e) => onChange({ aiModel: e.target.value })}
-          className={`${inputCls} cursor-pointer`}
-        >
-          <option value="gpt-4o-mini">gpt-4o-mini (recommended — fast & affordable)</option>
-          <option value="gpt-4o">gpt-4o (most capable)</option>
-          <option value="gpt-3.5-turbo">gpt-3.5-turbo (legacy)</option>
-        </select>
+      <SectionHeader title="AI Configuration" desc="Configure the AI provider, endpoint, and credentials used for tenant screening" />
+      
+      <Field label="AI Provider">
+        <div className="grid grid-cols-2 gap-3 mt-1 sm:grid-cols-4">
+          {[
+            { id: 'openai', label: 'OpenAI' },
+            { id: 'openrouter', label: 'OpenRouter' },
+            { id: 'gemini', label: 'Gemini' },
+            { id: 'custom', label: 'Custom' },
+          ].map((prov) => (
+            <label
+              key={prov.id}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
+                settings.aiProvider === prov.id
+                  ? 'bg-purple-500/10 border-purple-500/40 text-purple-200 shadow-md shadow-purple-500/5'
+                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              <input
+                id={`settings-ai-provider-${prov.id}`}
+                type="radio"
+                name="aiProvider"
+                value={prov.id}
+                checked={settings.aiProvider === prov.id}
+                onChange={() => handleProviderChange(prov.id)}
+                className="w-4 h-4 text-purple-600 bg-slate-900 border-slate-700 focus:ring-purple-500 focus:ring-offset-slate-900 focus:ring-2"
+              />
+              <span className="text-sm font-semibold">{prov.label}</span>
+            </label>
+          ))}
+        </div>
       </Field>
+
+      <Field label="Base URL" hint="Leave empty for OpenAI default">
+        <input
+          id="settings-ai-base-url"
+          type="text"
+          value={settings.aiBaseUrl || ''}
+          onChange={(e) => onChange({ aiBaseUrl: e.target.value })}
+          className={inputCls}
+          placeholder="https://..."
+        />
+      </Field>
+
       <Field
-        label="OpenAI API Key"
+        label="API Key"
         hint={
-          settings.openaiApiKeyConfigured
+          settings.aiApiKeyConfigured
             ? 'A key is currently saved. Enter a new value to replace it.'
-            : 'Enter your OpenAI API key — stored AES-256 encrypted.'
+            : 'Enter your provider API key — stored AES-256 encrypted.'
         }
       >
         <div className="relative">
           <input
             id="settings-ai-key"
             type={showKey ? 'text' : 'password'}
-            value={settings.openaiApiKey}
-            onChange={(e) => onChange({ openaiApiKey: e.target.value })}
+            value={settings.aiApiKey || ''}
+            onChange={(e) => onChange({ aiApiKey: e.target.value })}
             className={`${inputCls} pr-12 font-mono`}
-            placeholder={settings.openaiApiKeyConfigured ? '••••••••••••••••' : 'sk-…'}
+            placeholder={settings.aiApiKeyConfigured ? '••••••••' : 'Enter API Key'}
             autoComplete="off"
           />
           <button
@@ -237,17 +331,31 @@ function AITab({
         </div>
       </Field>
 
+      <Field label="Model" hint="The dynamic model identifier to call.">
+        <input
+          id="settings-ai-model"
+          type="text"
+          value={settings.aiModel || ''}
+          onChange={(e) => onChange({ aiModel: e.target.value })}
+          className={inputCls}
+          placeholder={getSuggestedModelPlaceholder(settings.aiProvider || 'openai')}
+        />
+      </Field>
+
       {/* Test result */}
       {testResult && (
         <div
-          className={`p-3 rounded-xl text-sm border ${
+          className={`p-4 rounded-xl text-sm border font-medium ${
             testResult.success
               ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
               : 'bg-red-500/10 border-red-500/20 text-red-300'
           }`}
         >
-          {testResult.success ? '✅ ' : '❌ '}
-          {testResult.message}
+          {testResult.success ? (
+            `✓ Connected · Provider: ${testResult.provider || 'Unknown'} · Model: ${testResult.model || 'Unknown'} · Response: ${testResult.response || 'OK'}`
+          ) : (
+            testResult.error || 'Connection failed'
+          )}
         </div>
       )}
 
@@ -542,6 +650,10 @@ type TabId = (typeof TABS)[number]['id'];
 const DEFAULT_SETTINGS: Settings = {
   appName: 'PropAgent',
   appLogo: '',
+  aiProvider: 'openai',
+  aiBaseUrl: '',
+  aiApiKey: '',
+  aiApiKeyConfigured: false,
   aiModel: 'gpt-4o-mini',
   openaiApiKey: '',
   openaiApiKeyConfigured: false,
@@ -566,6 +678,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [apiKeyEdited, setApiKeyEdited] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -578,7 +691,12 @@ export default function AdminSettingsPage() {
       const res = await fetch('/api/admin/settings');
       const data = await res.json();
       if (data.success) {
-        setSettings((prev) => ({ ...prev, ...data.data }));
+        const fetchedData = { ...data.data };
+        if (fetchedData.aiApiKeyConfigured) {
+          fetchedData.aiApiKey = '';
+        }
+        setSettings((prev) => ({ ...prev, ...fetchedData }));
+        setApiKeyEdited(false);
       }
     } catch {
       showToast('Failed to load settings', 'error');
@@ -592,16 +710,23 @@ export default function AdminSettingsPage() {
   }, [fetchSettings]);
 
   const handleChange = (patch: Partial<Settings>) => {
+    if (patch.aiApiKey !== undefined) {
+      setApiKeyEdited(true);
+    }
     setSettings((prev) => ({ ...prev, ...patch }));
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      const payload: Partial<Settings> = { ...settings };
+      if (!apiKeyEdited) {
+        delete payload.aiApiKey;
+      }
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
@@ -668,7 +793,7 @@ export default function AdminSettingsPage() {
                 <GeneralTab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} />
               )}
               {activeTab === 'ai' && (
-                <AITab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} />
+                <AITab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} showToast={showToast} />
               )}
               {activeTab === 'email' && (
                 <EmailConfigTab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} />

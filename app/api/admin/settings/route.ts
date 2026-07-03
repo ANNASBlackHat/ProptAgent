@@ -16,6 +16,10 @@ async function getHandler(_req: AuthenticatedRequest): Promise<Response> {
         appName: settings.appName,
         appLogo: settings.appLogo,
         aiModel: settings.aiModel,
+        aiProvider: settings.aiProvider || 'openai',
+        aiBaseUrl: settings.aiBaseUrl || '',
+        aiApiKey: settings.aiApiKey ? '••••••••••••••••' : '',
+        aiApiKeyConfigured: !!settings.aiApiKey,
         openaiApiKey: settings.openaiApiKey ? '••••••••••••••••' : '',
         openaiApiKeyConfigured: !!settings.openaiApiKey,
         smtpHost: settings.smtpHost,
@@ -50,10 +54,28 @@ async function putHandler(req: AuthenticatedRequest): Promise<Response> {
     if (body.appLogo !== undefined) settings.appLogo = body.appLogo;
 
     // AI config
+    if (body.aiProvider !== undefined) settings.aiProvider = body.aiProvider;
+    if (body.aiBaseUrl !== undefined) settings.aiBaseUrl = body.aiBaseUrl;
     if (body.aiModel !== undefined) settings.aiModel = body.aiModel;
     // Only update if a real value is provided (not the mask)
-    if (body.openaiApiKey && !body.openaiApiKey.includes('•')) {
-      settings.openaiApiKey = encryptField(body.openaiApiKey);
+    if (body.aiApiKey !== undefined) {
+      if (body.aiApiKey === '') {
+        settings.aiApiKey = '';
+      } else if (!body.aiApiKey.includes('•')) {
+        settings.aiApiKey = encryptField(body.aiApiKey);
+      }
+    }
+    if (body.clearAiApiKey) {
+      settings.aiApiKey = '';
+    }
+
+    // Keep legacy support for openaiApiKey
+    if (body.openaiApiKey !== undefined) {
+      if (body.openaiApiKey === '') {
+        settings.openaiApiKey = '';
+      } else if (!body.openaiApiKey.includes('•')) {
+        settings.openaiApiKey = encryptField(body.openaiApiKey);
+      }
     }
     if (body.clearOpenaiApiKey) {
       settings.openaiApiKey = '';
