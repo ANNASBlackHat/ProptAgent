@@ -43,6 +43,7 @@ export default function LandlordSidebar({
       badge: urgentMaintenance > 0 ? urgentMaintenance : undefined,
       pulseIfBadge: true,
     },
+    { label: 'Billing', href: '/billing', icon: '💳' },
     { label: 'Settings', href: '/settings', icon: '⚙️' },
   ];
 
@@ -67,10 +68,33 @@ export default function LandlordSidebar({
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-100 truncate">
-              {user?.companyName || user?.name}
-            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-sm font-bold text-slate-100 truncate max-w-[125px]">
+                {user?.companyName || user?.name}
+              </p>
+              {user?.role === 'landlord' && (
+                <span
+                  className={`text-[9px] font-black px-1.5 py-0.5 rounded-full select-none capitalize leading-tight ${
+                    user.planSlug === 'pro'
+                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      : user.planSlug === 'business'
+                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      : 'bg-slate-700/20 text-slate-400 border border-slate-705/30'
+                  }`}
+                >
+                  {user.planSlug || 'free'}
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
+            {user?.role === 'landlord' && (!user.planSlug || user.planSlug === 'free') && (
+              <Link
+                href="/pricing"
+                className="inline-block text-[10px] font-bold text-blue-400 hover:text-blue-300 hover:underline mt-0.5"
+              >
+                Upgrade Plan →
+              </Link>
+            )}
           </div>
         </div>
       </div>

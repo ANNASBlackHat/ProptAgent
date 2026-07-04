@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import User from '@/models/User';
+import Plan from '@/models/Plan';
 import { signToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -27,6 +28,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Find the plan with slug: "free"
+    const freePlan = await Plan.findOne({ slug: 'free' });
+    const planSlug = freePlan ? 'free' : '';
+    const planId = freePlan ? freePlan._id : null;
+    const subscriptionStatus = freePlan ? 'active' : 'none';
+
     // Create landlord user
     const user = new User({
       name,
@@ -36,6 +43,13 @@ export async function POST(req: NextRequest) {
       companyName,
       phone,
       isActive: true,
+      planId,
+      planSlug,
+      subscriptionStatus,
+      usageThisMonth: {
+        applications: 0,
+        resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days reset period
+      },
     });
 
     await user.save();

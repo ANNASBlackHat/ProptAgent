@@ -116,7 +116,7 @@ async function updateMaintenanceStatus(
               </p>
               
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant/maintenance" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/tenant/maintenance" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
                   Go to Tenant Portal
                 </a>
               </div>

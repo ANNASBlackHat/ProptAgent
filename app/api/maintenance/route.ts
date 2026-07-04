@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
-import MaintenanceRequest, { IMaintenanceRequest } from '@/models/MaintenanceRequest';
+import MaintenanceRequest from '@/models/MaintenanceRequest';
 import Lease from '@/models/Lease';
 import User from '@/models/User';
 import Property from '@/models/Property';
 import Unit from '@/models/Unit';
 import { sendEmail } from '@/lib/email';
 import { sanitizeObject } from '@/lib/sanitize';
+import { checkMaintenanceModule } from '@/lib/planLimits';
 
 // GET /api/maintenance — List landlord's maintenance requests with filtering, pagination, and sorting (Urgent + Open first)
 async function listMaintenanceRequests(req: AuthenticatedRequest) {
@@ -119,6 +120,21 @@ async function createMaintenanceRequest(req: AuthenticatedRequest) {
       );
     }
 
+    // Enforce Maintenance Module plan limits
+    const limitCheck = await checkMaintenanceModule(activeLease.landlordId.toString());
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'PLAN_LIMIT_EXCEEDED',
+          message: limitCheck.reason,
+          limit: limitCheck.limit,
+          upgradeUrl: '/billing',
+        },
+        { status: 403 }
+      );
+    }
+
     const newRequest = await MaintenanceRequest.create({
       leaseId: activeLease._id,
       unitId: activeLease.unitId,
@@ -197,7 +213,7 @@ async function createMaintenanceRequest(req: AuthenticatedRequest) {
               </p>
               
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/maintenance/${newRequest._id}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/maintenance/${newRequest._id}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);">
                   View Request Details
                 </a>
               </div>
@@ -221,3 +237,4 @@ async function createMaintenanceRequest(req: AuthenticatedRequest) {
 
 export const GET = withAuth(listMaintenanceRequests, ['landlord']);
 export const POST = withAuth(createMaintenanceRequest, ['tenant']);
+export const dynamic = 'force-dynamic';

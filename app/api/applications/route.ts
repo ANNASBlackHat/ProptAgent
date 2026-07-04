@@ -81,3 +81,4 @@ async function getApplications(req: AuthenticatedRequest) {
 }
 
 export const GET = withAuth(getApplications, ['landlord', 'super_admin']);
+export const dynamic = 'force-dynamic';

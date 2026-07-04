@@ -79,7 +79,7 @@ export async function checkExpiringLeases(): Promise<{
               </p>
               
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/leases/${lease._id}" style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #0f172a; text-decoration: none; padding: 14px 28px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25);">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/leases/${lease._id}" style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #0f172a; text-decoration: none; padding: 14px 28px; font-size: 15px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25);">
                   View Lease Details
                 </a>
               </div>

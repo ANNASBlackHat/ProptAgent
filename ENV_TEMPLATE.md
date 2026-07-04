@@ -29,3 +29,6 @@ SMTP_FROM=noreply@yourdomain.com
 # File Upload
 UPLOAD_DIR=public/uploads
 MAX_FILE_SIZE_MB=5
+
+# Encryption
+ENCRYPTION_KEY=<random 32 character string>

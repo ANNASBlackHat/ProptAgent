@@ -3,20 +3,22 @@ import crypto from 'crypto';
 
 // ─── Encryption helpers ───────────────────────────────────────────────────────
 
-const ENCRYPTION_KEY_RAW = process.env.ENCRYPTION_KEY || 'propagent-default-encryption-key-32ch';
-// AES-256 requires a 32-byte key
-const ENCRYPTION_KEY = crypto
-  .createHash('sha256')
-  .update(ENCRYPTION_KEY_RAW)
-  .digest(); // 32 bytes
+function getEncryptionKey(): Buffer {
+  const keyRaw = process.env.ENCRYPTION_KEY;
+  if (!keyRaw) {
+    throw new Error('ENCRYPTION_KEY environment variable is not defined');
+  }
+  return crypto.createHash('sha256').update(keyRaw).digest();
+}
 
 const ALGORITHM = 'aes-256-cbc';
 const IV_LENGTH = 16;
 
 export function encryptField(text: string): string {
   if (!text) return '';
+  const key = getEncryptionKey();
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
   const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
   return iv.toString('hex') + ':' + encrypted.toString('hex');
 }
@@ -27,7 +29,8 @@ export function decryptField(encrypted: string): string {
     const [ivHex, encryptedHex] = encrypted.split(':');
     const iv = Buffer.from(ivHex, 'hex');
     const encryptedBuf = Buffer.from(encryptedHex, 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+    const key = getEncryptionKey();
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     const decrypted = Buffer.concat([decipher.update(encryptedBuf), decipher.final()]);
     return decrypted.toString('utf8');
   } catch {
@@ -65,6 +68,11 @@ export interface ISystemSettings extends Document {
   smtpUser: string;
   smtpPass: string; // stored encrypted
   smtpFrom: string;
+  stripePublishableKey: string;
+  stripeSecretKey: string; // stored encrypted
+  stripeWebhookSecret: string; // stored encrypted
+  stripeCurrency: string;
+  stripeEnabled: boolean;
   emailTemplates: IEmailTemplates;
   updatedAt: Date;
 }
@@ -114,10 +122,15 @@ const SystemSettingsSchema = new Schema<ISystemSettings>(
     aiModel: { type: String, default: 'gpt-4o-mini' },
     openaiApiKey: { type: String, default: '' }, // stored encrypted
     smtpHost: { type: String, default: '' },
-    smtpPort: { type: String, default: '587' },
+    smtpPort: { type: String, default: '' },
     smtpUser: { type: String, default: '' },
     smtpPass: { type: String, default: '' }, // stored encrypted
-    smtpFrom: { type: String, default: 'noreply@propagent.com' },
+    smtpFrom: { type: String, default: '' },
+    stripePublishableKey: { type: String, default: '' },
+    stripeSecretKey: { type: String, default: '' }, // stored encrypted
+    stripeWebhookSecret: { type: String, default: '' }, // stored encrypted
+    stripeCurrency: { type: String, default: 'usd' },
+    stripeEnabled: { type: Boolean, default: false },
     emailTemplates: {
       applicationConfirmation: { type: EmailTemplateSchema, default: () => ({ ...defaultTemplates.applicationConfirmation }) },
       statusChange: { type: EmailTemplateSchema, default: () => ({ ...defaultTemplates.statusChange }) },
@@ -144,10 +157,15 @@ SystemSettingsSchema.statics.getSingleton = async function (): Promise<ISystemSe
       openaiApiKey: process.env.AI_API_KEY ? encryptField(process.env.AI_API_KEY) : '',
       aiModel: process.env.AI_MODEL || 'gpt-4o-mini',
       smtpHost: process.env.SMTP_HOST || '',
-      smtpPort: process.env.SMTP_PORT || '587',
+      smtpPort: process.env.SMTP_PORT || '',
       smtpUser: process.env.SMTP_USER || '',
       smtpPass: process.env.SMTP_PASS ? encryptField(process.env.SMTP_PASS) : '',
-      smtpFrom: process.env.SMTP_FROM || 'noreply@propagent.com',
+      smtpFrom: process.env.SMTP_FROM || '',
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+      stripeSecretKey: process.env.STRIPE_SECRET_KEY ? encryptField(process.env.STRIPE_SECRET_KEY) : '',
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ? encryptField(process.env.STRIPE_WEBHOOK_SECRET) : '',
+      stripeCurrency: process.env.STRIPE_CURRENCY || 'usd',
+      stripeEnabled: process.env.STRIPE_ENABLED === 'true',
     });
   }
   return settings;

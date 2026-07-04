@@ -257,3 +257,4 @@ async function getLandlordDashboard(req: AuthenticatedRequest) {
 }
 
 export const GET = withAuth(getLandlordDashboard, ['landlord', 'super_admin']);
+export const dynamic = 'force-dynamic';

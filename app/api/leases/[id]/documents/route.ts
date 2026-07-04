@@ -8,7 +8,7 @@ import Lease from '@/models/Lease';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB limit for PDFs
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB limit for PDFs
 
 // POST /api/leases/[id]/documents — Upload a PDF lease document
 async function uploadDocument(
@@ -50,7 +50,7 @@ async function uploadDocument(
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { success: false, error: 'File size exceeds the 10MB limit' },
+        { success: false, error: 'File size exceeds the 5MB limit' },
         { status: 400 }
       );
     }

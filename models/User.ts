@@ -14,6 +14,28 @@ export interface IUser extends Document {
   resetPasswordExpire?: Date;
   screeningQuestions?: string[];
   createdAt: Date;
+  
+  // Subscription fields
+  planId?: mongoose.Types.ObjectId | null;
+  planSlug?: string;
+  subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'expired' | 'none';
+  trialEndsAt?: Date | null;
+  currentPeriodStart?: Date | null;
+  currentPeriodEnd?: Date | null;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  cancelAtPeriodEnd: boolean;
+  usageThisMonth: {
+    applications: number;
+    resetAt?: Date | null;
+  };
+  subscriptionAuditTrail?: {
+    action: string;
+    planSlug?: string;
+    reason?: string;
+    timestamp: Date;
+  }[];
+  
   comparePassword(plain: string): Promise<boolean>;
 }
 
@@ -68,6 +90,62 @@ const UserSchema = new Schema<IUser>({
     type: Date,
     default: Date.now,
   },
+  planId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Plan',
+    default: null,
+  },
+  planSlug: {
+    type: String,
+    default: '',
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ['trialing', 'active', 'past_due', 'cancelled', 'expired', 'none'],
+    default: 'none',
+  },
+  trialEndsAt: {
+    type: Date,
+    default: null,
+  },
+  currentPeriodStart: {
+    type: Date,
+    default: null,
+  },
+  currentPeriodEnd: {
+    type: Date,
+    default: null,
+  },
+  stripeCustomerId: {
+    type: String,
+    default: null,
+  },
+  stripeSubscriptionId: {
+    type: String,
+    default: null,
+  },
+  cancelAtPeriodEnd: {
+    type: Boolean,
+    default: false,
+  },
+  usageThisMonth: {
+    applications: {
+      type: Number,
+      default: 0,
+    },
+    resetAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  subscriptionAuditTrail: [
+    {
+      action: { type: String, required: true },
+      planSlug: { type: String },
+      reason: { type: String },
+      timestamp: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 // Pre-save hook to hash password

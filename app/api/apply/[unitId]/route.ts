@@ -7,6 +7,7 @@ import User from '@/models/User';
 import { sendEmail } from '@/lib/email';
 import { rateLimit } from '@/lib/rateLimit';
 import { sanitizeObject } from '@/lib/sanitize';
+import { checkApplicationLimit, incrementApplicationUsage } from '@/lib/planLimits';
 
 // ─── GET /api/apply/[unitId] — PUBLIC ─────────────────────────────────────────
 // Returns unit + property info for the public application form.
@@ -177,6 +178,21 @@ export async function POST(
       }
     }
 
+    // Enforce monthly application limit
+    const limitCheck = await checkApplicationLimit(unit.landlordId.toString());
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'PLAN_LIMIT_EXCEEDED',
+          message: limitCheck.reason,
+          limit: limitCheck.limit,
+          upgradeUrl: '/billing',
+        },
+        { status: 403 }
+      );
+    }
+
     // Create the application
     const applicationLink = `/apply/${unitId}`;
     const application = await Application.create({
@@ -195,6 +211,9 @@ export async function POST(
       applicationLink,
       statusHistory: [{ status: 'pending', changedAt: new Date() }],
     });
+
+    // Increment application count and log usage
+    await incrementApplicationUsage(unit.landlordId.toString());
 
     // Send confirmation email to applicant
     try {

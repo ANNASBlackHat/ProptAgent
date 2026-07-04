@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PropAgent — AI Tenant Screening & Property Management Documentation</title>
+  <meta name="description" content="Official documentation and setup guide for PropAgent, the Next.js and MongoDB tenant screening SaaS.">
+  <style>
+    /* ─── DESIGN SYSTEM & THEMING ────────────────────────────────────────── */
+    :root {
+      /* Dark Theme (Default) */
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      --accent-light: rgba(99, 102, 241, 0.1);
+      --border: #1f2937;
+      --code-bg: #0d1117;
+      --card-bg: rgba(17, 24, 39, 0.75);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+      
+      --note-bg: rgba(59, 130, 246, 0.1);
+      --note-border: #3b82f6;
+      --tip-bg: rgba(16, 185, 129, 0.1);
+      --tip-border: #10b981;
+      --warn-bg: rgba(245, 158, 11, 0.1);
+      --warn-border: #f59e0b;
+      --caution-bg: rgba(239, 68, 68, 0.1);
+      --caution-border: #ef4444;
+
+      /* Code Highlight (Dark) */
+      --code-comment: #6a737d;
+      --code-keyword: #ff7b72;
+      --code-string: #a5d6ff;
+      --code-variable: #ffa657;
+      --code-function: #d2a6ff;
+      --code-number: #79c0ff;
+      --code-operator: #ff7b72;
+    }
+
+    [data-theme="light"] {
+      /* Light Theme overrides */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --accent: #4f46e5;
+      --accent-hover: #3730a3;
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      --accent-light: rgba(79, 70, 229, 0.08);
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+      
+      --note-bg: rgba(59, 130, 246, 0.08);
+      --tip-bg: rgba(16, 185, 129, 0.08);
+      --warn-bg: rgba(245, 158, 11, 0.08);
+      --caution-bg: rgba(239, 68, 68, 0.08);
+
+      /* Code Highlight (Light) */
+      --code-comment: #6e7781;
+      --code-keyword: #cf222e;
+      --code-string: #0a3069;
+      --code-variable: #953800;
+      --code-function: #8250df;
+      --code-number: #0550ae;
+      --code-operator: #cf222e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── SIDEBAR NAVIGATION ──────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 290px;
+      background-color: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s, border-color 0.3s;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .logo-container {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    .sidebar-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+    }
+
+    .version-tag {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background-color: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .search-box {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 12px 10px 36px;
+      border-radius: 8px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-light);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      width: 16px;
+      height: 16px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 24px;
+      padding-right: 4px;
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+      width: 4px;
+    }
+    .sidebar-nav::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .sidebar-nav::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item a {
+      display: block;
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-item a:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active a {
+      background-color: var(--accent-light);
+      color: var(--accent);
+      font-weight: 600;
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      padding-left: 9px;
+    }
+
+    .theme-toggle-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      background-color: var(--border);
+    }
+
+    /* ─── MAIN CONTENT ────────────────────────────────────────────────────── */
+    .main-wrapper {
+      margin-left: 290px;
+      flex: 1;
+      padding: 48px 64px;
+      max-width: 1200px;
+      min-width: 0;
+    }
+
+    .mobile-header {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      z-index: 99;
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    header.doc-header {
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header.doc-header h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    header.doc-header p {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+    }
+
+    section {
+      margin-bottom: 56px;
+      scroll-margin-top: 40px;
+    }
+
+    section:not(:last-child) {
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h2 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 28px 0 16px 0;
+      color: var(--text-primary);
+    }
+
+    h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 20px 0 10px 0;
+      color: var(--text-primary);
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    strong {
+      color: var(--text-primary);
+    }
+
+    a.doc-link {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--accent);
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    a.doc-link:hover {
+      color: var(--accent-hover);
+      border-bottom-style: solid;
+    }
+
+    /* Lists */
+    ul, ol {
+      margin-bottom: 20px;
+      padding-left: 24px;
+      color: var(--text-secondary);
+    }
+
+    li {
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    /* ─── TABLES ──────────────────────────────────────────────────────────── */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      margin: 24px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.925rem;
+      background-color: var(--bg-secondary);
+    }
+
+    th, td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background-color: var(--bg-tertiary);
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: var(--bg-tertiary);
+      transition: background-color 0.15s ease;
+    }
+
+    /* ─── CODE & SYNTAX HIGHLIGHTING ───────────────────────────────────────── */
+    .code-container {
+      position: relative;
+      margin: 24px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .code-header {
+      background-color: var(--bg-tertiary);
+      padding: 8px 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-lang {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px 20px;
+      overflow-x: auto;
+      background-color: var(--code-bg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    code {
+      color: var(--text-primary);
+      display: block;
+    }
+
+    /* Inline Code */
+    p code, li code, td code {
+      display: inline;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+
+    .code-btn-copy {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .code-btn-copy:hover {
+      background-color: var(--border);
+      color: var(--text-primary);
+    }
+
+    /* Code Token Styling */
+    .c-comment { color: var(--code-comment); font-style: italic; }
+    .c-keyword { color: var(--code-keyword); font-weight: 600; }
+    .c-str { color: var(--code-string); }
+    .c-var { color: var(--code-variable); }
+    .c-fn { color: var(--code-function); }
+    .c-num { color: var(--code-number); }
+    .c-op { color: var(--code-operator); }
+
+    /* ─── ALERTS / CALLOUT CARDS ──────────────────────────────────────────── */
+    .alert-card {
+      margin: 24px 0;
+      padding: 16px 20px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      display: flex;
+      gap: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .alert-icon-wrapper {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .alert-card.note {
+      background-color: var(--note-bg);
+      border-left-color: var(--note-border);
+    }
+    .alert-card.note .alert-title { color: var(--note-border); }
+
+    .alert-card.tip {
+      background-color: var(--tip-bg);
+      border-left-color: var(--tip-border);
+    }
+    .alert-card.tip .alert-title { color: var(--tip-border); }
+
+    .alert-card.warn {
+      background-color: var(--warn-bg);
+      border-left-color: var(--warn-border);
+    }
+    .alert-card.warn .alert-title { color: var(--warn-border); }
+
+    .alert-card.caution {
+      background-color: var(--caution-bg);
+      border-left-color: var(--caution-border);
+    }
+    .alert-card.caution .alert-title { color: var(--caution-border); }
+
+    /* ─── INTERACTIVE TABS (AI / SMTP CONFIGS) ────────────────────────────── */
+    .tabs-wrapper {
+      margin: 24px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: var(--bg-secondary);
+      box-shadow: var(--shadow);
+    }
+
+    .tabs-list {
+      display: flex;
+      background-color: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border);
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      outline: none;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background-color: var(--bg-secondary);
+    }
+
+    .tab-panel {
+      padding: 24px;
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ─── GRID LAYOUT FOR ROLES & REQUIREMENTS ────────────────────────────── */
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin: 24px 0;
+    }
+
+    .grid-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .grid-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .grid-card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background-color: var(--accent-light);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .grid-card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+
+    .grid-card-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── BACK TO TOP BUTTON ──────────────────────────────────────────────── */
+    .back-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      color: #ffffff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      z-index: 99;
+    }
+
+    .back-to-top.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .back-to-top:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+    }
+
+    /* ─── RESPONSIVE STYLES ────────────────────────────────────────────────── */
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 0 0 30px rgba(0,0,0,0.5);
+      }
+      .main-wrapper {
+        margin-left: 0;
+        padding: 32px 24px;
+      }
+      .mobile-header {
+        display: flex;
+      }
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 98;
+      }
+      .sidebar-overlay.open {
+        display: block;
+      }
+      header.doc-header h1 {
+        font-size: 2.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mobile Top Bar -->
+  <div class="mobile-header">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="logo-container" style="width: 32px; height: 32px; border-radius: 6px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <span class="sidebar-title" style="font-size: 1.1rem;">PropAgent Docs</span>
+    </div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sticky Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div>
+        <span class="sidebar-title">PropAgent</span>
+        <span class="version-tag">v1.0.0</span>
+      </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-box">
+      <input type="text" class="search-input" id="sidebarSearch" placeholder="Search sections...">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    </div>
+
+    <!-- Table of Contents -->
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li class="nav-item active" data-sec="introduction"><a href="#introduction">1. Introduction</a></li>
+        <li class="nav-item" data-sec="requirements"><a href="#requirements">2. System Requirements</a></li>
+        <li class="nav-item" data-sec="installation"><a href="#installation">3. Installation Guide</a></li>
+        <li class="nav-item" data-sec="environment-variables"><a href="#environment-variables">4. Environment Setup</a></li>
+        <li class="nav-item" data-sec="first-login"><a href="#first-login">5. Seed & First Login</a></li>
+        <li class="nav-item" data-sec="ai-setup"><a href="#ai-setup">6. AI Provider Config</a></li>
+        <li class="nav-item" data-sec="email-setup"><a href="#email-setup">7. Email SMTP Setup</a></li>
+        <li class="nav-item" data-sec="user-roles"><a href="#user-roles">8. User Roles Explained</a></li>
+        <li class="nav-item" data-sec="features"><a href="#features">9. Feature Walkthrough</a></li>
+        <li class="nav-item" data-sec="customization"><a href="#customization">10. Customization Guide</a></li>
+        <li class="nav-item" data-sec="troubleshooting"><a href="#troubleshooting">11. Troubleshooting FAQs</a></li>
+        <li class="nav-item" data-sec="support"><a href="#support">12. Support & Credits</a></li>
+      </ul>
+    </nav>
+
+    <!-- Theme Toggler -->
+    <button class="theme-toggle-btn" id="themeToggleBtn">
+      <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Sun icon default -->
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <span id="themeToggleText">Light Mode</span>
+    </button>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="main-wrapper">
+    <header class="doc-header">
+      <h1>PropAgent Documentation</h1>
+      <p>Welcome to the official deployment and operations guide for <strong>PropAgent</strong> – the AI-powered tenant screening and property management platform. Follow this step-by-step documentation to set up, customize, and maintain your SaaS instance.</p>
+    </header>
+
+    <!-- SECTION 1: INTRODUCTION -->
+    <section id="introduction">
+      <h2>
+        <span style="color: var(--accent);">1.</span> Introduction
+      </h2>
+      <p><strong>PropAgent</strong> is a state-of-the-art property management SaaS platform designed to solve the single largest friction point for landlords and property managers: <strong>tenant screening</strong>. By incorporating conversational Artificial Intelligence, PropAgent moves beyond simple forms to run interactive text-based interviews with rental applicants. The system automatically assesses key details such as employment status, references, income-to-rent ratios, and general fit to generate detailed risk scores and clear warnings.</p>
+      
+      <p>Built with Next.js 15, TypeScript, Tailwind CSS, and MongoDB, PropAgent provides a completely secure, rate-limited, self-hosted solution. It is ideal for property owners, independent landlords, real estate syndicates, or developers looking to launch their own SaaS screen-and-rent platform.</p>
+      
+      <div class="alert-card note">
+        <div class="alert-icon-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--note-border)">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        <div class="alert-content">
+          <div class="alert-title">Advisory Screening Disclaimer</div>
+          <p style="margin: 0; font-size: 0.9rem;">PropAgent's AI scoring engine is designed as an advisory helper. Final decisions regarding lease approvals remain the exclusive responsibility of the landlord or property manager. The system does not conduct background check or credit reporting integrations out of the box due to local regulatory compliance, putting absolute data ownership in your hands.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: SYSTEM REQUIREMENTS -->
+    <section id="requirements">
+      <h2>
+        <span style="color: var(--accent);">2.</span> System Requirements
+      </h2>
+      <p>Before launching the PropAgent installation, ensure your hosting server or local machine meets the following environment specifications:</p>
+      
+      <div class="grid-cards">
+        <div class="grid-card">
+          <div class="grid-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+              <line x1="6" y1="6" x2="6.01" y2="6"/>
+              <line x1="6" y1="18" x2="6.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Node.js Environment</div>
+          <div class="grid-card-text">
+            <strong>Node.js 20+</strong> (LTS Recommended). Standard packet managers like NPM v9+ are required for installing and maintaining server modules.
+          </div>
+        </div>
+
+        <div class="grid-card">
+          <div class="grid-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Database</div>
+          <div class="grid-card-text">
+            <strong>MongoDB v7.0+</strong>. Supports local community server installations or cloud managed instances (e.g. MongoDB Atlas clusters).
+          </div>
+        </div>
+
+        <div class="grid-card">
+          <div class="grid-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Docker (Optional)</div>
+          <div class="grid-card-text">
+            Supports containerization for local development database instances using <strong>Docker Compose</strong>. Simple config included.
+          </div>
+        </div>
+      </div>
+
+      <p>To enable the full scope of AI screening capabilities, a billing-active API Key is required from an LLM provider such as OpenAI (recommend GPT-4o-mini), OpenRouter, or Google Gemini.</p>
+    </section>
+
+    <!-- SECTION 3: INSTALLATION GUIDE -->
+    <section id="installation">
+      <h2>
+        <span style="color: var(--accent);">3.</span> Installation Guide
+      </h2>
+      <p>Follow these step-by-step terminal commands to set up the project on your development system or production VPS server:</p>
+
+      <h3>1. Clone and Install Project Modules</h3>
+      <p>Extract the purchase files, enter the project root directory, and run the dependency installation command:</p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">Bash</span>
+        </div>
+        <pre><code><span class="c-comment"># Install project dependencies</span>
+npm install</code></pre>
+      </div>
+
+      <h3>2. Prepare Environment File</h3>
+      <p>Copy the sample configuration file to create your local active environment file:</p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">Bash</span>
+        </div>
+        <pre><code><span class="c-comment"># Create local environment config</span>
+cp .env.example .env.local</code></pre>
+      </div>
+      <p>Open `.env.local` in your editor and configure your database, secret tokens, encryption keys, and fallback settings as detailed in the <a class="doc-link" href="#environment-variables">Environment Setup</a> section.</p>
+
+      <h3>3. Deploy MongoDB (Optional via Docker Compose)</h3>
+      <p>If you do not have MongoDB running locally, copy this simple configuration block into a local `docker-compose.yml` file to spin up a background database container instantly:</p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">yaml</span>
+        </div>
+        <pre><code><span class="c-keyword">version</span>: <span class="c-str">'3.8'</span>
+
+<span class="c-keyword">services</span>:
+  <span class="c-keyword">mongodb</span>:
+    <span class="c-keyword">image</span>: mongo:latest
+    <span class="c-keyword">container_name</span>: propagent-db
+    <span class="c-keyword">ports</span>:
+      - <span class="c-str">"27017:27017"</span>
+    <span class="c-keyword">volumes</span>:
+      - mongo-data:/data/db
+
+<span class="c-keyword">volumes</span>:
+  <span class="c-keyword">mongo-data</span>:</code></pre>
+      </div>
+
+      <p>Launch the database container in detached mode:</p>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+        </div>
+        <pre><code><span class="c-comment"># Start MongoDB background container</span>
+docker-compose up -d</code></pre>
+      </div>
+
+      <h3>4. Seed the Database</h3>
+      <p>Execute the idempotency seeder script to populate your database collections with default system settings, roles, sample properties, applications, leases, and mock AI screenings:</p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">Bash</span>
+        </div>
+        <pre><code><span class="c-comment"># Execute seeder script</span>
+npm run seed</code></pre>
+      </div>
+
+      <h3>5. Launch Development Server</h3>
+      <p>Start the Next.js local development process:</p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">Bash</span>
+        </div>
+        <pre><code><span class="c-comment"># Start development server</span>
+npm run dev</code></pre>
+      </div>
+      <p>Open <a class="doc-link" href="http://localhost:3000" target="_blank">http://localhost:3000</a> in your browser to view the application.</p>
+
+      <h3>6. Build & Deploy for Production</h3>
+      <p>To compile the optimized Next.js static and server assets for public release:</p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">Bash</span>
+        </div>
+        <pre><code><span class="c-comment"># Compile static artifacts</span>
+npm run build
+
+<span class="c-comment"># Launch production server</span>
+npm run start</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 4: ENVIRONMENT VARIABLES -->
+    <section id="environment-variables">
+      <h2>
+        <span style="color: var(--accent);">4.</span> Environment Setup
+      </h2>
+      <p>The system requires certain variables to be defined in `.env.local` to start. Below is a breakdown of all parameters, their function, and standard examples:</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Description</th>
+              <th>Example / Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NEXT_PUBLIC_APP_URL</code></td>
+              <td>Base application URL (used to generate screening link invites).</td>
+              <td><code>http://localhost:3000</code></td>
+            </tr>
+            <tr>
+              <td><code>APP_NAME</code></td>
+              <td>Default name of the application displayed in headers and emails.</td>
+              <td><code>PropAgent</code></td>
+            </tr>
+            <tr>
+              <td><code>MONGODB_URI</code></td>
+              <td>Connection string for the MongoDB instance.</td>
+              <td><code>mongodb://localhost:27017/propagent</code></td>
+            </tr>
+            <tr>
+              <td><code>JWT_SECRET</code></td>
+              <td>Secret token key used to sign and sign-verify user sessions.</td>
+              <td><code>your-random-64-char-session-secret</code></td>
+            </tr>
+            <tr>
+              <td><code>JWT_EXPIRES_IN</code></td>
+              <td>Session duration before token expires (e.g. 7 days).</td>
+              <td><code>7d</code></td>
+            </tr>
+            <tr>
+              <td><code>ENCRYPTION_KEY</code></td>
+              <td>A <strong>cryptographic 32-character key</strong> used to encrypt sensitive DB credentials like SMTP passwords and API keys.</td>
+              <td><code>your-random-32-char-crypt-key-here</code></td>
+            </tr>
+            <tr>
+              <td><code>UPLOAD_DIR</code></td>
+              <td>Target filesystem path where unit photographs and lease PDFs are saved.</td>
+              <td><code>public/uploads</code></td>
+            </tr>
+            <tr>
+              <td><code>MAX_FILE_SIZE_MB</code></td>
+              <td>Enforced limit for documents and photo attachments.</td>
+              <td><code>5</code></td>
+            </tr>
+            <tr>
+              <td><code>AI_PROVIDER</code></td>
+              <td>Fallback AI provider to connect with (openai, openrouter, custom).</td>
+              <td><code>openai</code></td>
+            </tr>
+            <tr>
+              <td><code>AI_MODEL</code></td>
+              <td>Fallback model to initiate screening transcripts and scoring.</td>
+              <td><code>gpt-4o-mini</code></td>
+            </tr>
+            <tr>
+              <td><code>SMTP_HOST</code></td>
+              <td>Hostname of the email SMTP outbound server.</td>
+              <td><code>smtp.gmail.com</code></td>
+            </tr>
+            <tr>
+              <td><code>SMTP_PORT</code></td>
+              <td>Port to execute outbound SMTP transactions (usually 587 or 465).</td>
+              <td><code>587</code></td>
+            </tr>
+            <tr>
+              <td><code>SMTP_USER</code></td>
+              <td>SMTP provider account username.</td>
+              <td><code>your-smtp-username</code></td>
+            </tr>
+            <tr>
+              <td><code>SMTP_PASS</code></td>
+              <td>SMTP provider account password or app password.</td>
+              <td><code>your-smtp-password</code></td>
+            </tr>
+            <tr>
+              <td><code>SMTP_FROM</code></td>
+              <td>Sender address displayed on outgoing emails.</td>
+              <td><code>noreply@yourdomain.com</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="alert-card caution">
+        <div class="alert-icon-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--caution-border)">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div class="alert-content">
+          <div class="alert-title">CRITICAL ENCRYPTION KEY REQUIREMENT</div>
+          <p style="margin: 0; font-size: 0.9rem;">You MUST specify a secure 32-character string in <code>ENCRYPTION_KEY</code> before running the seeder or registering any settings. If you change this key later, values stored encrypted in MongoDB (such as SMTP and LLM passwords) will fail decryption, resulting in errors. Refer to the Troubleshooting section for fix details.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: SEED & FIRST LOGIN -->
+    <section id="first-login">
+      <h2>
+        <span style="color: var(--accent);">5.</span> Seed & First Login
+      </h2>
+      <p>To speed up evaluation and configuration of PropAgent, the seeder creates sample datasets. These include properties, leases, payment ledgers, maintenance reports, and ready-to-inspect applicant transcripts with calculated AI scores.</p>
+      
+      <p>Run the seeding process by executing: <code>npm run seed</code></p>
+      <p>Once populated, you can access the platform using these pre-configured default credentials:</p>
+
+      <div class="grid-cards">
+        <div class="grid-card">
+          <div class="grid-card-icon" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Super Admin Role</div>
+          <div class="grid-card-text">
+            <strong>Email:</strong> <code>admin@propagent.com</code><br>
+            <strong>Password:</strong> <code>Admin123!</code><br>
+            <span style="display: block; margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);">Accesses global configuration options, logs, system settings, and landlord profiles.</span>
+          </div>
+        </div>
+
+        <div class="grid-card">
+          <div class="grid-card-icon" style="background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Demo Landlord 1</div>
+          <div class="grid-card-text">
+            <strong>Email:</strong> <code>demo@landlord.com</code><br>
+            <strong>Password:</strong> <code>Demo123!</code><br>
+            <span style="display: block; margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);">Manages properties, units, reviews AI screenings, creates leases, logs payments.</span>
+          </div>
+        </div>
+
+        <div class="grid-card">
+          <div class="grid-card-icon" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Demo Tenant</div>
+          <div class="grid-card-text">
+            <strong>Email:</strong> <code>tenant@propagent.com</code><br>
+            <strong>Password:</strong> <code>Tenant123!</code><br>
+            <span style="display: block; margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);">Reviews active lease terms, logs/views payment history receipts, registers maintenance tickets.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-card warning">
+        <div class="alert-icon-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--warn-border)">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div class="alert-content">
+          <div class="alert-title">Change Seeding Credentials</div>
+          <p style="margin: 0; font-size: 0.9rem;">For security, make sure to change default credentials in production. You can modify password hashes directly in <code>scripts/seed.ts</code>, or change them in the Super Admin profile settings screen immediately after first login.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: AI PROVIDER SETUP -->
+    <section id="ai-setup">
+      <h2>
+        <span style="color: var(--accent);">6.</span> AI Provider Config
+      </h2>
+      <p>PropAgent supports multiple LLM providers. Super Admins can adjust the system-wide AI configuration directly from the <strong>Admin Control Panel → Settings → AI Configuration</strong> tab. The API key is securely encrypted before being saved in MongoDB.</p>
+      
+      <p>Select your provider below to view configuration instructions:</p>
+
+      <!-- AI Config Tabs -->
+      <div class="tabs-wrapper">
+        <ul class="tabs-list" id="aiTabs">
+          <li><button class="tab-btn active" onclick="switchTab('ai', 0)">OpenAI</button></li>
+          <li><button class="tab-btn" onclick="switchTab('ai', 1)">OpenRouter</button></li>
+          <li><button class="tab-btn" onclick="switchTab('ai', 2)">Google Gemini</button></li>
+          <li><button class="tab-btn" onclick="switchTab('ai', 3)">Custom Endpoint</button></li>
+        </ul>
+        
+        <!-- OpenAI Panel -->
+        <div class="tab-panel active" id="aiPanel-0">
+          <h4>OpenAI Configuration (Recommended)</h4>
+          <p>Connect directly to OpenAI's endpoints. This setup offers low latency for tenant screening interviews and structuring JSON analysis.</p>
+          <ul>
+            <li><strong>AI Provider:</strong> <code>openai</code></li>
+            <li><strong>AI Base URL:</strong> (Leave completely blank)</li>
+            <li><strong>AI API Key:</strong> Your OpenAI API key (looks like <code>sk-proj-...</code>)</li>
+            <li><strong>AI Model:</strong> <code>gpt-4o-mini</code> (highly cost-effective) or <code>gpt-4o</code></li>
+          </ul>
+          <div class="alert-card tip">
+            <div class="alert-icon-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--tip-border)">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="alert-content">
+              <div class="alert-title">Cost Optimization Tip</div>
+              <p style="margin: 0; font-size: 0.9rem;">We strongly recommend using <code>gpt-4o-mini</code>. It yields high-quality analysis of tenant screening transcripts while keeping token consumption costs extremely low (typically less than $0.005 per interview session).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenRouter Panel -->
+        <div class="tab-panel" id="aiPanel-1">
+          <h4>OpenRouter Setup</h4>
+          <p>OpenRouter lets you route requests to hundreds of different open-source and proprietary models (such as Claude, Llama 3, or Mistral).</p>
+          <ul>
+            <li><strong>AI Provider:</strong> <code>openrouter</code> (or choose <code>custom</code>)</li>
+            <li><strong>AI Base URL:</strong> <code>https://openrouter.ai/api/v1</code></li>
+            <li><strong>AI API Key:</strong> Your OpenRouter API key (looks like <code>sk-or-...</code>)</li>
+            <li><strong>AI Model:</strong> E.g., <code>meta-llama/llama-3-8b-instruct</code> or <code>google/gemini-flash-1.5</code></li>
+          </ul>
+        </div>
+
+        <!-- Gemini Panel -->
+        <div class="tab-panel" id="aiPanel-2">
+          <h4>Google Gemini (via OpenAI Compatibility)</h4>
+          <p>Access Google's Gemini models directly using Gemini's native OpenAI-compatible interface.</p>
+          <ul>
+            <li><strong>AI Provider:</strong> Choose <code>custom</code> (or <code>gemini</code> if available)</li>
+            <li><strong>AI Base URL:</strong> <code>https://generativelanguage.googleapis.com/openai/v1</code></li>
+            <li><strong>AI API Key:</strong> Your Google Gemini API Key</li>
+            <li><strong>AI Model:</strong> <code>gemini-1.5-flash</code> or <code>gemini-1.5-pro</code></li>
+          </ul>
+        </div>
+
+        <!-- Custom Panel -->
+        <div class="tab-panel" id="aiPanel-3">
+          <h4>Custom OpenAI-Compatible Endpoints</h4>
+          <p>Connect to local LLM frameworks (such as LM Studio or Ollama) or other third-party inference providers (like Together AI or DeepSeek).</p>
+          <ul>
+            <li><strong>AI Provider:</strong> Select <code>custom</code></li>
+            <li><strong>AI Base URL:</strong> Set to your endpoint (e.g. <code>https://api.deepseek.com/v1</code> or <code>http://localhost:1234/v1</code>)</li>
+            <li><strong>AI API Key:</strong> Required API key or placeholder text</li>
+            <li><strong>AI Model:</strong> Model identifier (e.g., <code>deepseek-chat</code>)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 7: EMAIL SMTP SETUP -->
+    <section id="email-setup">
+      <h2>
+        <span style="color: var(--accent);">7.</span> Email SMTP Setup
+      </h2>
+      <p>PropAgent triggers transactional emails when new screening invitations are issued, application statuses change, leases are finalized, or maintenance requests are modified. The outgoing mail is configured under <strong>Admin Panel → Settings → SMTP Configuration</strong>.</p>
+      
+      <p>Select your mail provider to view setup details:</p>
+
+      <div class="tabs-wrapper">
+        <ul class="tabs-list" id="emailTabs">
+          <li><button class="tab-btn active" onclick="switchTab('email', 0)">Gmail</button></li>
+          <li><button class="tab-btn" onclick="switchTab('email', 1)">SendGrid / Mailgun</button></li>
+          <li><button class="tab-btn" onclick="switchTab('email', 2)">Mailtrap (Testing)</button></li>
+        </ul>
+
+        <!-- Gmail Panel -->
+        <div class="tab-panel active" id="emailPanel-0">
+          <h4>Gmail SMTP Setup</h4>
+          <p>Gmail is excellent for small scale transactional testing. For security, you must use an <strong>App Password</strong> rather than your primary Google Account password.</p>
+          <ul>
+            <li><strong>SMTP Host:</strong> <code>smtp.gmail.com</code></li>
+            <li><strong>SMTP Port:</strong> <code>587</code></li>
+            <li><strong>SMTP User:</strong> Your full Gmail Address (e.g. <code>yourcompany@gmail.com</code>)</li>
+            <li><strong>SMTP Pass:</strong> Generated 16-character Google App Password</li>
+            <li><strong>SMTP From:</strong> <code>yourcompany@gmail.com</code></li>
+          </ul>
+          <div class="alert-card note">
+            <div class="alert-icon-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--note-border)">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </div>
+            <div class="alert-content">
+              <div class="alert-title">How to generate a Google App Password</div>
+              <p style="margin: 0; font-size: 0.9rem;">Go to Google Account Settings → Security. Ensure 2-Step Verification is enabled, then search for "App Passwords". Generate a new password, select "Other (Custom Name)", name it "PropAgent", and copy the 16-letter code into your SMTP settings.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SendGrid / Mailgun Panel -->
+        <div class="tab-panel" id="emailPanel-1">
+          <h4>Enterprise SMTP Setup (SendGrid, Mailgun, Amazon SES)</h4>
+          <p>Recommended for production SaaS deployments. Ensure you use a verified domain inside your email console to prevent outbound messages from landing in spam.</p>
+          
+          <p><strong>Example (SendGrid):</strong></p>
+          <ul>
+            <li><strong>SMTP Host:</strong> <code>smtp.sendgrid.net</code></li>
+            <li><strong>SMTP Port:</strong> <code>587</code></li>
+            <li><strong>SMTP User:</strong> <code>apikey</code></li>
+            <li><strong>SMTP Pass:</strong> Your SendGrid API Key</li>
+            <li><strong>SMTP From:</strong> <code>noreply@yourdomain.com</code></li>
+          </ul>
+        </div>
+
+        <!-- Mailtrap Panel -->
+        <div class="tab-panel" id="emailPanel-2">
+          <h4>Mailtrap Setup (Development)</h4>
+          <p>Excellent for inspecting email styling locally without triggering actual outbound messages to users.</p>
+          <ul>
+            <li><strong>SMTP Host:</strong> <code>smtp.mailtrap.io</code></li>
+            <li><strong>SMTP Port:</strong> <code>2525</code> (or 587)</li>
+            <li><strong>SMTP User:</strong> Mailtrap Inbox Username</li>
+            <li><strong>SMTP Pass:</strong> Mailtrap Inbox Password</li>
+            <li><strong>SMTP From:</strong> <code>dev@propagent.com</code></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: USER ROLES EXPLAINED -->
+    <section id="user-roles">
+      <h2>
+        <span style="color: var(--accent);">8.</span> User Roles Explained
+      </h2>
+      <p>PropAgent implements role-based access control (RBAC). Each role has access to specific dashboards and functions:</p>
+
+      <div class="grid-cards">
+        <div class="grid-card">
+          <div class="grid-card-icon" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Super Admin</div>
+          <div class="grid-card-text">
+            The platform owner. Super Admins manage the platform settings, configure the system-wide AI and SMTP credentials, audit registrations, view metrics across all landlords, and activate or deactivate landlord accounts.
+          </div>
+        </div>
+
+        <div class="grid-card">
+          <div class="grid-card-icon" style="background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Landlord / Property Manager</div>
+          <div class="grid-card-text">
+            The primary system user. Landlords register their property lists, configure custom units, view dashboards containing active tenant stats, review AI-graded applicant summaries, issue leases, manually log payments, and track maintenance tickets.
+          </div>
+        </div>
+
+        <div class="grid-card">
+          <div class="grid-card-icon" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="grid-card-title">Tenant (and Applicant)</div>
+          <div class="grid-card-text">
+            End users. Applicants fill out rental applications online and complete the interactive AI screening interviews. Approved tenants use their portal to review active lease agreements, check rent status, view payment history, and report maintenance issues.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 9: FEATURE WALKTHROUGH -->
+    <section id="features">
+      <h2>
+        <span style="color: var(--accent);">9.</span> Feature Walkthrough
+      </h2>
+      <p>Explore the main functional blocks that drive the PropAgent SaaS product:</p>
+
+      <h3>🤖 Interactive AI Screening Portal</h3>
+      <p>Prospective tenants submit details via a public application page. Once submitted, they are routed to an interactive chat portal where the AI interviewer asks follow-up screening questions. The conversation is stored dynamically in MongoDB, allowing landlords to review transcripts at any time.</p>
+
+      <h3>📊 Intelligent Risk Assessment & Flags</h3>
+      <p>The system parses the interview log, compares parameters against landlord rules, and outputs a clean dashboard grading system (0-100 score). The scoring engine displays warnings for income discrepancies, short employment terms, or landord reference flags.</p>
+
+      <h3>🏘️ Property & Unit Management Console</h3>
+      <p>Landlords can easily create properties, manage unit occupancy states, upload unit images, and configure rental terms. Custom filters allow landlords to check occupancy rates and monitor portfolio health at a glance.</p>
+
+      <h3>📑 Lease Ledger & Document Repository</h3>
+      <p>Upon application approval, the system pre-fills details to generate a lease agreement. Landlords can log lease parameters, upload signed lease agreements (PDFs), track expiration timers, and log lease extensions.</p>
+
+      <h3>💳 Manual Rent Logging & Receipts</h3>
+      <p>Landlords can manually log rent payments, record payment methods (online, cash, bank transfer), and add ledger notes. This allows landlords to keep a digital log of tenant histories without third-party payment system overhead.</p>
+
+      <h3>🔧 Tenant Maintenance Portal</h3>
+      <p>Tenants can log maintenance tickets directly from their portal, attach photographs, and specify urgency levels (Low, Medium, Urgent). Landlords can update ticket statuses (Open, In Progress, Resolved) and keep private internal notes on vendor coordinates.</p>
+
+      <h3>🔒 Security and Rate Limiting Utilities</h3>
+      <p>PropAgent includes sliding-window rate limiters to protect authentication routes (max 10 attempts/15 mins) and screening portals (max 3 applications/hour). Recursive input sanitization strips HTML tags to protect the database, and ownership audits prevent unauthorized access to records.</p>
+    </section>
+
+    <!-- SECTION 10: CUSTOMIZATION GUIDE -->
+    <section id="customization">
+      <h2>
+        <span style="color: var(--accent);">10.</span> Customization Guide
+      </h2>
+      <p>Deployers can easily customize PropAgent's look and feel, brand name, and AI prompts to suit their needs:</p>
+
+      <h3>Changing Brand Name & Logo</h3>
+      <p>Change your application's public identity globally by editing the <code>APP_NAME</code> variable inside your `.env` file, or by logging into the Super Admin panel settings. You can upload custom corporate logo graphics from the dashboard.</p>
+
+      <h3>Modifying Theme Palette (Tailwind CSS)</h3>
+      <p>To change the color scheme, edit the color variables inside `tailwind.config.ts`. For example, you can adjust the primary indigo color theme:</p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-lang">TypeScript</span>
+        </div>
+        <pre><code><span class="c-comment">// tailwind.config.ts</span>
+theme: {
+  extend: {
+    colors: {
+      primary: {
+        <span class="c-keyword">50</span>: <span class="c-str">'#f5f3ff'</span>,
+        <span class="c-keyword">500</span>: <span class="c-str">'#8b5cf6'</span>, <span class="c-comment">// Modify to set your new primary color</span>
+        <span class="c-keyword">600</span>: <span class="c-str">'#7c3aed'</span>,
+      }
+    }
+  }
+}</code></pre>
+      </div>
+
+      <h3>Adjusting the AI Screening and Scoring System Prompts</h3>
+      <p>The AI interviewer's persona, interview focus, and scoring criteria can be customized by editing the variables in <a class="doc-link" href="file:///Users/annasblackhat/Documents/Experiment/PropAgent/lib/prompts.ts">lib/prompts.ts</a>:</p>
+      <ul>
+        <li><code>SYSTEM_PROMPT_TEMPLATE</code>: Configures the conversational persona, structure, and tone of the AI interviewer.</li>
+        <li><code>SCORING_SYSTEM_PROMPT</code>: Configures the assessment parameters and rules used to generate risk reports.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 11: TROUBLESHOOTING FAQS -->
+    <section id="troubleshooting">
+      <h2>
+        <span style="color: var(--accent);">11.</span> Troubleshooting FAQs
+      </h2>
+      <p>Resolve the most common configuration issues using these solutions:</p>
+
+      <h3>1. Database Connection Failures (<code>MongoNetworkError</code>)</h3>
+      <p><strong>Cause:</strong> MongoDB service is not running or the URI is incorrect.<br>
+      <strong>Solution:</strong> Verify that MongoDB is active (`brew services list` or run `docker ps` if containerized). Ensure your password in `.env.local` is URL-encoded if it contains special characters.</p>
+
+      <h3>2. OpenAI API Errors or Zero Quota Responses</h3>
+      <p><strong>Cause:</strong> Missing API credit, wrong credentials, or rate limits.<br>
+      <strong>Solution:</strong> Verify credit status in your OpenAI portal. Go to <strong>Admin → Settings → AI Config</strong> and ensure the model matches your API key access level (e.g., use <code>gpt-4o-mini</code>).</p>
+
+      <h3>3. Transactional Emails Not Delivering</h3>
+      <p><strong>Cause:</strong> Incorrect SMTP configurations or blocked accounts.<br>
+      <strong>Solution:</strong> Verify host details and use port <code>587</code> with TLS. If using Gmail, you must use an <strong>App Password</strong>. Ensure the <code>SMTP_FROM</code> address is a verified domain with your email provider.</p>
+
+      <h3>4. Upload Failures or Permission Denied (<code>EACCES</code>)</h3>
+      <p><strong>Cause:</strong> Missing directories or restricted folder permissions.<br>
+      <strong>Solution:</strong> Ensure your Node process has write access to the uploads directory. Run <code>chmod -R 775 public/uploads</code> to verify permissions.</p>
+
+      <h3>5. Users Logout Immediately / JWT Expiration</h3>
+      <p><strong>Cause:</strong> <code>JWT_SECRET</code> changes on restart or session timers are too short.<br>
+      <strong>Solution:</strong> Set a static string for <code>JWT_SECRET</code> in `.env.local` to prevent session invalidations during server restarts, and set <code>JWT_EXPIRES_IN=7d</code>.</p>
+
+      <h3>6. Next.js Static Build Hydration/Compiling Errors</h3>
+      <p><strong>Cause:</strong> Server-side files are evaluated statically during build phases without DB access.<br>
+      <strong>Solution:</strong> Ensure MongoDB is accessible during builds, or add <code>export const dynamic = 'force-dynamic'</code> to routes that pull data dynamically.</p>
+
+      <h3>7. User blocked with 429 Status code</h3>
+      <p><strong>Cause:</strong> Custom rate limiters blocking repetitive requests.<br>
+      <strong>Solution:</strong> This is expected during automated security tests. Restart the Next.js process to clear the in-memory cache and reset rate-limiting history.</p>
+
+      <h3>8. Setting decryption errors after changing <code>ENCRYPTION_KEY</code></h3>
+      <p><strong>Cause:</strong> Stored settings cannot be decrypted because the encryption key changed.<br>
+      <strong>Solution:</strong> If you update your <code>ENCRYPTION_KEY</code>, old credentials stored in MongoDB will fail to decrypt. Run a database command to delete the document in the <code>systemsettings</code> collection and re-run <code>npm run seed</code> to generate clean settings with your new key.</p>
+    </section>
+
+    <!-- SECTION 12: SUPPORT & CREDITS -->
+    <section id="support">
+      <h2>
+        <span style="color: var(--accent);">12.</span> Support & Credits
+      </h2>
+      <p>Thank you for purchasing PropAgent. Below are the credits for the open-source libraries that make this project possible:</p>
+      <ul>
+        <li><strong>Framework:</strong> <a class="doc-link" href="https://nextjs.org/" target="_blank">Next.js</a></li>
+        <li><strong>Styling:</strong> <a class="doc-link" href="https://tailwindcss.com/" target="_blank">Tailwind CSS</a></li>
+        <li><strong>Database Driver:</strong> <a class="doc-link" href="https://mongoosejs.com/" target="_blank">Mongoose ORM</a></li>
+        <li><strong>Mail:</strong> <a class="doc-link" href="https://nodemailer.com/" target="_blank">Nodemailer</a></li>
+        <li><strong>Icons:</strong> <a class="doc-link" href="https://lucide.dev/" target="_blank">Lucide Icons</a></li>
+      </ul>
+
+      <h3>Customer Support</h3>
+      <p>If you encounter issues not covered in this guide, please reach out to us through the CodeCanyon Support tab on our product page or email us at <code>support@propagent-saas.com</code>. We provide updates and support for all verified buyers.</p>
+    </aside>
+
+    <footer style="margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.875rem; text-align: center;">
+      PropAgent Tenant Screening SaaS Documentation &copy; 2026. All rights reserved.
+    </footer>
+  </div>
+
+  <!-- Floating Back to Top Button -->
+  <button class="back-to-top" id="backToTopBtn" aria-label="Scroll to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+
+  <!-- ─── INTERACTIVE UTILITIES (JAVASCRIPT) ────────────────────────────────── -->
+  <script>
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeToggleText = document.getElementById('themeToggleText');
+    const htmlEl = document.documentElement;
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = htmlEl.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      htmlEl.setAttribute('data-theme', newTheme);
+      themeToggleText.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+      
+      // Update toggle icon
+      if (newTheme === 'dark') {
+        themeIcon.innerHTML = `
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        `;
+      } else {
+        themeIcon.innerHTML = `
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        `;
+      }
+    });
+
+    // Mobile Sidebar Toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function toggleMenu() {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('open');
+    }
+
+    menuToggle.addEventListener('click', toggleMenu);
+    sidebarOverlay.addEventListener('click', toggleMenu);
+
+    // Hide sidebar on nav link click in mobile
+    document.querySelectorAll('.nav-item a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (sidebar.classList.contains('open')) {
+          toggleMenu();
+        }
+      });
+    });
+
+    // Search and Filter Logic
+    const searchInput = document.getElementById('sidebarSearch');
+    const sections = document.querySelectorAll('section');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      
+      sections.forEach(section => {
+        const text = section.textContent.toLowerCase();
+        const sectionId = section.getAttribute('id');
+        const match = text.includes(query);
+        
+        // Hide or show the section in the main view
+        section.style.display = match ? 'block' : 'none';
+        
+        // Hide or show the matching sidebar link
+        const matchingNavItem = Array.from(navItems).find(item => item.getAttribute('data-sec') === sectionId);
+        if (matchingNavItem) {
+          matchingNavItem.style.display = match ? 'block' : 'none';
+        }
+      });
+    });
+
+    // Tab switcher logic
+    function switchTab(type, index) {
+      const wrapperId = type === 'ai' ? 'aiTabs' : 'emailTabs';
+      const containerId = type === 'ai' ? 'aiPanel' : 'emailPanel';
+      
+      const tabList = document.getElementById(wrapperId);
+      const tabButtons = tabList.querySelectorAll('.tab-btn');
+      
+      tabButtons.forEach((btn, idx) => {
+        if (idx === index) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Panels
+      const panels = document.querySelectorAll(`[id^="${containerId}-"]`);
+      panels.forEach((panel) => {
+        if (panel.id === `${containerId}-${index}`) {
+          panel.classList.add('active');
+        } else {
+          panel.classList.remove('active');
+        }
+      });
+    }
+
+    // Floating Back to Top Button
+    const backToTopBtn = document.getElementById('backToTopBtn');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        backToTopBtn.classList.add('visible');
+      } else {
+        backToTopBtn.classList.remove('visible');
+      }
+    });
+
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Copy to Clipboard Utility
+    document.querySelectorAll('.code-container').forEach(container => {
+      const codeBlock = container.querySelector('code');
+      const header = container.querySelector('.code-header');
+      
+      // Inject copy button
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'code-btn-copy';
+      copyBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy
+      `;
+      header.appendChild(copyBtn);
+
+      copyBtn.addEventListener('click', () => {
+        const codeText = codeBlock.innerText;
+        navigator.clipboard.writeText(codeText).then(() => {
+          copyBtn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--tip-border);">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span style="color: var(--tip-border);">Copied!</span>
+          `;
+          setTimeout(() => {
+            copyBtn.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy
+            `;
+          }, 2000);
+        });
+      });
+    });
+
+    // Scrollspy Logic (Intersection Observer)
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -60% 0px',
+      threshold: 0
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const sectionId = entry.target.getAttribute('id');
+          navItems.forEach(item => {
+            if (item.getAttribute('data-sec') === sectionId) {
+              item.classList.add('active');
+            } else {
+              item.classList.remove('active');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => {
+      observer.observe(section);
+    });
+  </script>
+</body>
+</html>

@@ -50,7 +50,6 @@ async function updateUnit(req: AuthenticatedRequest, context: unknown) {
     await dbConnect();
 
     const id = await resolveId(context);
-    console.log('[PUT /api/units/:id] incoming id:', id, '| requesting user:', req.user?.userId);
 
     if (!mongoose.isValidObjectId(id)) {
       return NextResponse.json({ success: false, error: 'Invalid unit ID' }, { status: 400 });
@@ -58,10 +57,6 @@ async function updateUnit(req: AuthenticatedRequest, context: unknown) {
 
     // Step 1: Find the unit by _id only (works even if landlordId is missing on old docs)
     const existing = await Unit.findById(id);
-    console.log(
-      '[PUT /api/units/:id] unit found:', existing?._id ?? 'null',
-      '| unit.landlordId:', existing?.landlordId?.toString() ?? 'MISSING'
-    );
 
     if (!existing || !existing.isActive) {
       return NextResponse.json({ success: false, error: 'Unit not found' }, { status: 404 });
@@ -72,12 +67,6 @@ async function updateUnit(req: AuthenticatedRequest, context: unknown) {
     // If landlordId is missing (old doc), we allow the update and repair it.
     if (req.user!.role !== 'super_admin') {
       if (existing.landlordId && existing.landlordId.toString() !== req.user!.userId) {
-        console.warn(
-          '[PUT /api/units/:id] ownership mismatch — unit.landlordId:',
-          existing.landlordId.toString(),
-          '!= user:',
-          req.user!.userId
-        );
         return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
       }
     }
@@ -93,7 +82,6 @@ async function updateUnit(req: AuthenticatedRequest, context: unknown) {
     // If landlordId was missing on this unit, repair it silently
     if (!existing.landlordId) {
       body.landlordId = req.user!.userId;
-      console.log('[PUT /api/units/:id] repairing missing landlordId to', req.user!.userId);
     }
 
     const unit = await Unit.findByIdAndUpdate(
@@ -118,7 +106,6 @@ async function deleteUnit(req: AuthenticatedRequest, context: unknown) {
     await dbConnect();
 
     const id = await resolveId(context);
-    console.log('[DELETE /api/units/:id] incoming id:', id, '| requesting user:', req.user?.userId);
 
     if (!mongoose.isValidObjectId(id)) {
       return NextResponse.json({ success: false, error: 'Invalid unit ID' }, { status: 400 });
@@ -126,10 +113,6 @@ async function deleteUnit(req: AuthenticatedRequest, context: unknown) {
 
     // Step 1: Find by _id only
     const existing = await Unit.findById(id);
-    console.log(
-      '[DELETE /api/units/:id] unit found:', existing?._id ?? 'null',
-      '| unit.landlordId:', existing?.landlordId?.toString() ?? 'MISSING'
-    );
 
     if (!existing || !existing.isActive) {
       return NextResponse.json({ success: false, error: 'Unit not found' }, { status: 404 });
@@ -138,12 +121,6 @@ async function deleteUnit(req: AuthenticatedRequest, context: unknown) {
     // Step 2: Ownership check — skip for super_admin
     if (req.user!.role !== 'super_admin') {
       if (existing.landlordId && existing.landlordId.toString() !== req.user!.userId) {
-        console.warn(
-          '[DELETE /api/units/:id] ownership mismatch — unit.landlordId:',
-          existing.landlordId.toString(),
-          '!= user:',
-          req.user!.userId
-        );
         return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
       }
     }

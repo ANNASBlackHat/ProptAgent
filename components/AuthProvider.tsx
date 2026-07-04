@@ -11,6 +11,11 @@ export interface AuthUser {
   companyName?: string;
   logo?: string;
   phone?: string;
+  planSlug?: string;
+  subscriptionStatus?: string;
+  currentPeriodEnd?: string;
+  trialEndsAt?: string;
+  cancelAtPeriodEnd?: boolean;
   createdAt: string;
 }
 

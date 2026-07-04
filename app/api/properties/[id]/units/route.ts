@@ -5,6 +5,7 @@ import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Property from '@/models/Property';
 import Unit from '@/models/Unit';
 import { sanitizeObject } from '@/lib/sanitize';
+import { checkUnitLimit } from '@/lib/planLimits';
 
 type Context = { params: { id: string } };
 
@@ -47,6 +48,21 @@ async function createUnit(req: AuthenticatedRequest, context: unknown) {
     const property = await Property.findOne({ _id: id, landlordId: req.user!.userId, isActive: true });
     if (!property) {
       return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    }
+
+    // Enforce unit plan limits
+    const limitCheck = await checkUnitLimit(req.user!.userId, id);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'PLAN_LIMIT_EXCEEDED',
+          message: limitCheck.reason,
+          limit: limitCheck.limit,
+          upgradeUrl: '/billing',
+        },
+        { status: 403 }
+      );
     }
 
     const rawBody = await req.json();

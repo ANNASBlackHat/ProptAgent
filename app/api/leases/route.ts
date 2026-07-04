@@ -206,7 +206,7 @@ async function createLease(req: AuthenticatedRequest) {
             </p>
             
             <div style="text-align: center; margin: 32px 0;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tenant" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; font-size: 15px; font-weight: 600; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/tenant" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; font-size: 15px; font-weight: 600; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
                 Go to Tenant Portal
               </a>
             </div>
@@ -243,3 +243,4 @@ async function createLease(req: AuthenticatedRequest) {
 
 export const GET = withAuth(listLeases, ['landlord', 'super_admin']);
 export const POST = withAuth(createLease, ['landlord']);
+export const dynamic = 'force-dynamic';

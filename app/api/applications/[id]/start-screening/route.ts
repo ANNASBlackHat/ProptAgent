@@ -4,6 +4,7 @@ import { dbConnect } from '@/lib/db';
 import Application from '@/models/Application';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import { sendInterviewInvitationEmail } from '@/lib/email';
+import { checkAIScreening } from '@/lib/planLimits';
 
 async function startScreening(
   req: AuthenticatedRequest,
@@ -52,6 +53,21 @@ async function startScreening(
       );
     }
 
+    // Enforce AI Screening plan limits
+    const limitCheck = await checkAIScreening(application.landlordId.toString());
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'PLAN_LIMIT_EXCEEDED',
+          message: limitCheck.reason,
+          limit: limitCheck.limit,
+          upgradeUrl: '/billing',
+        },
+        { status: 403 }
+      );
+    }
+
     // Generates interviewToken (crypto.randomBytes(32).toString('hex'))
     const token = crypto.randomBytes(32).toString('hex');
     const expiry = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
@@ -64,7 +80,7 @@ async function startScreening(
     await application.save();
 
     // Sends email to tenant with link
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
     const interviewLink = `${baseUrl}/interview/${token}`;
 
     const propertyName = (application.propertyId as unknown as { name: string })?.name || 'Property';

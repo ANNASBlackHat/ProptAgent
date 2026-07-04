@@ -116,3 +116,4 @@ async function getTenantDashboard(req: AuthenticatedRequest) {
 }
 
 export const GET = withAuth(getTenantDashboard, ['tenant']);
+export const dynamic = 'force-dynamic';

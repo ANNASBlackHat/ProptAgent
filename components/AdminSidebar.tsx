@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -45,14 +45,50 @@ function IconSettings() {
   );
 }
 
+function IconPlans() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="5" y1="11" x2="8" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconSubscriptions() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="5" cy="10" r="1" fill="currentColor" />
+      <circle cx="8" cy="10" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mrr, setMrr] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/revenue')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setMrr(data.data.mrr);
+        }
+      })
+      .catch((err) => console.error('Failed to load sidebar MRR:', err));
+  }, []);
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin', icon: <IconGrid /> },
     { label: 'Landlords', href: '/admin/landlords', icon: <IconUsers /> },
+    { label: 'Subscriptions', href: '/admin/subscriptions', icon: <IconSubscriptions /> },
+    { label: 'Plans', href: '/admin/plans', icon: <IconPlans /> },
     { label: 'Settings', href: '/admin/settings', icon: <IconSettings /> },
   ];
 
@@ -104,10 +140,19 @@ export default function AdminSidebar() {
 
       {/* Brand footer */}
       <div className="px-5 py-3 border-t border-slate-800/50">
-        <p className="text-xs font-black bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-          PropAgent
-        </p>
-        <p className="text-[10px] text-slate-600">Admin Console</p>
+        <div className="flex justify-between items-center gap-2">
+          <div>
+            <p className="text-xs font-black bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+              PropAgent
+             </p>
+            <p className="text-[10px] text-slate-650">Admin Console</p>
+          </div>
+          {mrr !== null && (
+            <span className="text-[10px] text-slate-400 font-semibold bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
+              MRR: ${(mrr / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Logout */}

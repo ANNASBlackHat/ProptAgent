@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import User from '@/models/User';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
+import { checkCustomQuestions } from '@/lib/planLimits';
 
 // ─── GET /api/landlord/screening-questions ────────────────────────────────────
 async function getQuestions(
@@ -47,10 +48,18 @@ async function updateQuestions(
       );
     }
 
-    if (questions.length > 5) {
+    // Enforce custom questions limit
+    const limitCheck = await checkCustomQuestions(req.user!.userId, questions.length);
+    if (!limitCheck.allowed) {
       return NextResponse.json(
-        { success: false, error: 'Maximum of 5 custom screening questions allowed' },
-        { status: 400 }
+        {
+          success: false,
+          error: 'PLAN_LIMIT_EXCEEDED',
+          message: limitCheck.reason,
+          limit: limitCheck.limit,
+          upgradeUrl: '/billing',
+        },
+        { status: 403 }
       );
     }
 
@@ -85,3 +94,4 @@ async function updateQuestions(
 
 export const GET = withAuth(getQuestions, ['landlord']);
 export const PUT = withAuth(updateQuestions, ['landlord']);
+export const dynamic = 'force-dynamic';

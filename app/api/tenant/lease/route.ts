@@ -40,3 +40,4 @@ async function getTenantLease(req: AuthenticatedRequest) {
 }
 
 export const GET = withAuth(getTenantLease, ['tenant']);
+export const dynamic = 'force-dynamic';

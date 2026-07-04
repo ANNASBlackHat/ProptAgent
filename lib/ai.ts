@@ -75,8 +75,6 @@ export async function callAI(
   });
 
   try {
-    console.log(`[AI Call] Sending ${messages.length} messages. Model: ${model}`);
-
     const formattedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
 
     if (systemPrompt) {
@@ -94,7 +92,6 @@ export async function callAI(
     });
 
     const response = completion.choices[0]?.message?.content || '';
-    console.log(`[AI Call] Success. Response length: ${response.length} chars.`);
     return response;
   } catch (error) {
     console.error('[AI Call] OpenAI API call failed:', error);

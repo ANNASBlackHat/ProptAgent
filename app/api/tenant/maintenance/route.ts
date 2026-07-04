@@ -27,3 +27,4 @@ async function getTenantMaintenanceRequests(req: AuthenticatedRequest) {
 }
 
 export const GET = withAuth(getTenantMaintenanceRequests, ['tenant']);
+export const dynamic = 'force-dynamic';

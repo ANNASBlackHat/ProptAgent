@@ -25,6 +25,13 @@ interface Settings {
   smtpPass: string;
   smtpPassConfigured: boolean;
   smtpFrom: string;
+  stripePublishableKey: string;
+  stripeSecretKey: string;
+  stripeSecretKeyConfigured: boolean;
+  stripeWebhookSecret: string;
+  stripeWebhookSecretConfigured: boolean;
+  stripeCurrency: string;
+  stripeEnabled: boolean;
   emailTemplates: {
     applicationConfirmation: EmailTemplate;
     statusChange: EmailTemplate;
@@ -121,11 +128,13 @@ function GeneralTab({
   onChange,
   onSave,
   saving,
+  lastSaved,
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onSave: () => void;
   saving: boolean;
+  lastSaved?: Date;
 }) {
   return (
     <div className="space-y-5">
@@ -159,7 +168,7 @@ function GeneralTab({
         )}
       </Field>
       <div className="pt-2">
-        <SaveButton saving={saving} onSave={onSave} />
+        <SaveButton saving={saving} onSave={onSave} lastSaved={lastSaved} />
       </div>
     </div>
   );
@@ -171,12 +180,14 @@ function AITab({
   onSave,
   saving,
   showToast,
+  lastSaved,
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onSave: () => void;
   saving: boolean;
   showToast: (message: string, type: 'success' | 'error') => void;
+  lastSaved?: Date;
 }) {
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -376,7 +387,7 @@ function AITab({
             '⚡ Test AI Connection'
           )}
         </button>
-        <SaveButton saving={saving} onSave={onSave} />
+        <SaveButton saving={saving} onSave={onSave} lastSaved={lastSaved} />
       </div>
     </div>
   );
@@ -387,11 +398,13 @@ function EmailConfigTab({
   onChange,
   onSave,
   saving,
+  lastSaved,
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onSave: () => void;
   saving: boolean;
+  lastSaved?: Date;
 }) {
   const [showPass, setShowPass] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -519,7 +532,7 @@ function EmailConfigTab({
             '📧 Send Test Email'
           )}
         </button>
-        <SaveButton saving={saving} onSave={onSave} />
+        <SaveButton saving={saving} onSave={onSave} lastSaved={lastSaved} />
       </div>
     </div>
   );
@@ -530,11 +543,13 @@ function EmailTemplatesTab({
   onChange,
   onSave,
   saving,
+  lastSaved,
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onSave: () => void;
   saving: boolean;
+  lastSaved?: Date;
 }) {
   const [activeTemplate, setActiveTemplate] = useState<keyof typeof TEMPLATE_VARS>('applicationConfirmation');
 
@@ -609,30 +624,55 @@ function EmailTemplatesTab({
       </Field>
 
       <div className="pt-2">
-        <SaveButton saving={saving} onSave={onSave} />
+        <SaveButton saving={saving} onSave={onSave} lastSaved={lastSaved} />
       </div>
     </div>
   );
 }
 
-function SaveButton({ saving, onSave }: { saving: boolean; onSave: () => void }) {
+function RelativeLastSaved({ date }: { date?: Date }) {
+  const [text, setText] = useState('Not saved yet');
+  useEffect(() => {
+    if (!date) return;
+    const updateText = () => {
+      const diffMs = Date.now() - date.getTime();
+      const diffSecs = Math.floor(diffMs / 1000);
+      if (diffSecs < 60) {
+        setText('Last saved: Just now');
+      } else {
+        const mins = Math.floor(diffSecs / 60);
+        setText(`Last saved: ${mins} ${mins === 1 ? 'minute' : 'minutes'} ago`);
+      }
+    };
+    updateText();
+    const interval = setInterval(updateText, 15000);
+    return () => clearInterval(interval);
+  }, [date]);
+  if (!date) return null;
+  return <span className="text-xs text-slate-500 font-medium italic">{text}</span>;
+}
+
+function SaveButton({ saving, onSave, lastSaved }: { saving: boolean; onSave: () => void; lastSaved?: Date }) {
   return (
-    <button
-      type="button"
-      id="settings-save"
-      onClick={onSave}
-      disabled={saving}
-      className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/20"
-    >
-      {saving ? (
-        <span className="flex items-center gap-2">
-          <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full" />
-          Saving…
-        </span>
-      ) : (
-        'Save Changes'
-      )}
-    </button>
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        id="settings-save"
+        onClick={onSave}
+        disabled={saving}
+        className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/20 cursor-pointer"
+      >
+        {saving ? (
+          <span className="flex items-center gap-2">
+            <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full" />
+            Saving…
+          </span>
+        ) : (
+          'Save Changes'
+        )}
+      </button>
+      <RelativeLastSaved date={lastSaved} />
+    </div>
   );
 }
 
@@ -643,6 +683,7 @@ const TABS = [
   { id: 'ai', label: 'AI Config', icon: '🤖' },
   { id: 'email', label: 'Email Config', icon: '📮' },
   { id: 'templates', label: 'Email Templates', icon: '✉️' },
+  { id: 'stripe', label: 'Stripe Config', icon: '💳' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -658,11 +699,18 @@ const DEFAULT_SETTINGS: Settings = {
   openaiApiKey: '',
   openaiApiKeyConfigured: false,
   smtpHost: '',
-  smtpPort: '587',
+  smtpPort: '',
   smtpUser: '',
   smtpPass: '',
   smtpPassConfigured: false,
-  smtpFrom: 'noreply@propagent.com',
+  smtpFrom: '',
+  stripePublishableKey: '',
+  stripeSecretKey: '',
+  stripeSecretKeyConfigured: false,
+  stripeWebhookSecret: '',
+  stripeWebhookSecretConfigured: false,
+  stripeCurrency: 'usd',
+  stripeEnabled: false,
   emailTemplates: {
     applicationConfirmation: { subject: '', body: '' },
     statusChange: { subject: '', body: '' },
@@ -678,7 +726,13 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
   const [apiKeyEdited, setApiKeyEdited] = useState(false);
+  const [smtpPassEdited, setSmtpPassEdited] = useState(false);
+  const [stripeSecretKeyEdited, setStripeSecretKeyEdited] = useState(false);
+  const [stripeWebhookSecretEdited, setStripeWebhookSecretEdited] = useState(false);
+  
+  const [lastSaved, setLastSaved] = useState<Record<string, Date>>({});
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -695,8 +749,20 @@ export default function AdminSettingsPage() {
         if (fetchedData.aiApiKeyConfigured) {
           fetchedData.aiApiKey = '';
         }
+        if (fetchedData.smtpPassConfigured) {
+          fetchedData.smtpPass = '';
+        }
+        if (fetchedData.stripeSecretKeyConfigured) {
+          fetchedData.stripeSecretKey = '';
+        }
+        if (fetchedData.stripeWebhookSecretConfigured) {
+          fetchedData.stripeWebhookSecret = '';
+        }
         setSettings((prev) => ({ ...prev, ...fetchedData }));
         setApiKeyEdited(false);
+        setSmtpPassEdited(false);
+        setStripeSecretKeyEdited(false);
+        setStripeWebhookSecretEdited(false);
       }
     } catch {
       showToast('Failed to load settings', 'error');
@@ -713,16 +779,54 @@ export default function AdminSettingsPage() {
     if (patch.aiApiKey !== undefined) {
       setApiKeyEdited(true);
     }
+    if (patch.smtpPass !== undefined) {
+      setSmtpPassEdited(true);
+    }
+    if (patch.stripeSecretKey !== undefined) {
+      setStripeSecretKeyEdited(true);
+    }
+    if (patch.stripeWebhookSecret !== undefined) {
+      setStripeWebhookSecretEdited(true);
+    }
     setSettings((prev) => ({ ...prev, ...patch }));
   };
 
-  const handleSave = async () => {
+  const handleSaveTab = async (tabId: TabId) => {
     setSaving(true);
     try {
-      const payload: Partial<Settings> = { ...settings };
-      if (!apiKeyEdited) {
-        delete payload.aiApiKey;
+      const payload: Partial<Settings> = {};
+      if (tabId === 'general') {
+        payload.appName = settings.appName;
+        payload.appLogo = settings.appLogo;
+      } else if (tabId === 'ai') {
+        payload.aiProvider = settings.aiProvider;
+        payload.aiBaseUrl = settings.aiBaseUrl;
+        payload.aiModel = settings.aiModel;
+        if (apiKeyEdited) {
+          payload.aiApiKey = settings.aiApiKey;
+        }
+      } else if (tabId === 'email') {
+        payload.smtpHost = settings.smtpHost;
+        payload.smtpPort = settings.smtpPort;
+        payload.smtpUser = settings.smtpUser;
+        payload.smtpFrom = settings.smtpFrom;
+        if (smtpPassEdited) {
+          payload.smtpPass = settings.smtpPass;
+        }
+      } else if (tabId === 'templates') {
+        payload.emailTemplates = settings.emailTemplates;
+      } else if (tabId === 'stripe') {
+        payload.stripePublishableKey = settings.stripePublishableKey;
+        payload.stripeCurrency = settings.stripeCurrency;
+        payload.stripeEnabled = settings.stripeEnabled;
+        if (stripeSecretKeyEdited) {
+          payload.stripeSecretKey = settings.stripeSecretKey;
+        }
+        if (stripeWebhookSecretEdited) {
+          payload.stripeWebhookSecret = settings.stripeWebhookSecret;
+        }
       }
+
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -731,13 +835,13 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (data.success) {
         showToast('Settings saved successfully', 'success');
-        // Re-fetch to get updated masks
+        setLastSaved((prev) => ({ ...prev, [tabId]: new Date() }));
         await fetchSettings();
       } else {
-        showToast(data.error || 'Failed to save', 'error');
+        showToast(data.error || 'Failed to save settings', 'error');
       }
     } catch {
-      showToast('Network error', 'error');
+      showToast('Network error saving settings', 'error');
     } finally {
       setSaving(false);
     }
@@ -790,16 +894,19 @@ export default function AdminSettingsPage() {
             {/* Tab content */}
             <div className="flex-1 min-w-0 rounded-2xl bg-slate-900/60 border border-slate-800/80 p-6 backdrop-blur-sm">
               {activeTab === 'general' && (
-                <GeneralTab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} />
+                <GeneralTab settings={settings} onChange={handleChange} onSave={() => handleSaveTab('general')} saving={saving} lastSaved={lastSaved.general} />
               )}
               {activeTab === 'ai' && (
-                <AITab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} showToast={showToast} />
+                <AITab settings={settings} onChange={handleChange} onSave={() => handleSaveTab('ai')} saving={saving} showToast={showToast} lastSaved={lastSaved.ai} />
               )}
               {activeTab === 'email' && (
-                <EmailConfigTab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} />
+                <EmailConfigTab settings={settings} onChange={handleChange} onSave={() => handleSaveTab('email')} saving={saving} lastSaved={lastSaved.email} />
               )}
               {activeTab === 'templates' && (
-                <EmailTemplatesTab settings={settings} onChange={handleChange} onSave={handleSave} saving={saving} />
+                <EmailTemplatesTab settings={settings} onChange={handleChange} onSave={() => handleSaveTab('templates')} saving={saving} lastSaved={lastSaved.templates} />
+              )}
+              {activeTab === 'stripe' && (
+                <StripeConfigTab settings={settings} onChange={handleChange} onSave={() => handleSaveTab('stripe')} saving={saving} showToast={showToast} lastSaved={lastSaved.stripe} />
               )}
             </div>
           </div>
@@ -810,3 +917,230 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+
+function StripeConfigTab({
+  settings,
+  onChange,
+  onSave,
+  saving,
+  showToast,
+  lastSaved,
+}: {
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
+  onSave: () => void;
+  saving: boolean;
+  showToast: (message: string, type: 'success' | 'error') => void;
+  lastSaved?: Date;
+}) {
+  const [showSecret, setShowSecret] = useState(false);
+  const [showWebhook, setShowWebhook] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string[] | null>(null);
+
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [stripeMode, setStripeMode] = useState<'live' | 'test' | null>(null);
+
+  const handleSyncPlans = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/admin/stripe/sync-plans', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSyncResult(data.data.synced);
+        showToast('Successfully synced active plans to Stripe!', 'success');
+      } else {
+        showToast(data.error || 'Failed to sync plans', 'error');
+      }
+    } catch {
+      showToast('Network error during plan sync', 'error');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    setStripeMode(null);
+    try {
+      const res = await fetch('/api/admin/settings/test-stripe', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setStripeMode(data.data.mode);
+        showToast(`Stripe connection validated successfully in ${data.data.mode} mode!`, 'success');
+      } else {
+        showToast(data.error || 'Stripe connection test failed', 'error');
+      }
+    } catch {
+      showToast('Network error testing Stripe connection', 'error');
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        title="Stripe Billing Configuration"
+        desc="Enable paid landlord SaaS subscriptions. Landlords pay subscription plans to the platform operator."
+      />
+
+      {stripeMode === 'test' && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+          ⚠️ You are using Stripe test keys. Switch to live keys before launch.
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+        <input
+          id="settings-stripe-enabled"
+          type="checkbox"
+          checked={settings.stripeEnabled}
+          onChange={(e) => onChange({ stripeEnabled: e.target.checked })}
+          className="w-4 h-4 text-purple-600 bg-slate-900 border-slate-700 focus:ring-purple-500"
+        />
+        <div>
+          <label htmlFor="settings-stripe-enabled" className="text-sm font-bold text-slate-200 cursor-pointer select-none">
+            Enable Stripe subscription billing
+          </label>
+          <p className="text-xs text-slate-500 mt-0.5">
+            If disabled, landlords will remain on their assigned plans without payment requirement.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Currency" hint="The default currency for plan prices in Stripe.">
+          <select
+            id="settings-stripe-currency"
+            value={settings.stripeCurrency || 'usd'}
+            onChange={(e) => onChange({ stripeCurrency: e.target.value })}
+            className={inputCls}
+          >
+            <option value="usd">USD ($)</option>
+            <option value="eur">EUR (€)</option>
+            <option value="gbp">GBP (£)</option>
+            <option value="aud">AUD ($)</option>
+            <option value="sgd">SGD ($)</option>
+            <option value="idr">IDR (Rp)</option>
+          </select>
+        </Field>
+
+        <Field label="Stripe Publishable Key">
+          <input
+            id="settings-stripe-publishable-key"
+            type="text"
+            value={settings.stripePublishableKey || ''}
+            onChange={(e) => onChange({ stripePublishableKey: e.target.value })}
+            className={inputCls}
+            placeholder="pk_test_..."
+          />
+        </Field>
+      </div>
+
+      <Field
+        label="Stripe Secret Key"
+        hint={
+          settings.stripeSecretKeyConfigured
+            ? 'A secret key is currently saved. Enter a new value to replace it.'
+            : 'Enter your Stripe secret API key — stored AES-256 encrypted.'
+        }
+      >
+        <div className="relative">
+          <input
+            id="settings-stripe-secret-key"
+            type={showSecret ? 'text' : 'password'}
+            value={settings.stripeSecretKey || ''}
+            onChange={(e) => onChange({ stripeSecretKey: e.target.value })}
+            className={`${inputCls} pr-12 font-mono`}
+            placeholder={settings.stripeSecretKeyConfigured ? '••••••••' : 'sk_test_...'}
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            onClick={() => setShowSecret((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-xs font-semibold"
+          >
+            {showSecret ? 'Hide' : 'Show'}
+          </button>
+        </div>
+      </Field>
+
+      <Field
+        label="Stripe Webhook Secret"
+        hint={
+          settings.stripeWebhookSecretConfigured
+            ? 'A webhook secret is currently saved. Enter a new value to replace it.'
+            : 'Stripe webhook signing secret — stored AES-255 encrypted.'
+        }
+      >
+        <div className="relative">
+          <input
+            id="settings-stripe-webhook-secret"
+            type={showWebhook ? 'text' : 'password'}
+            value={settings.stripeWebhookSecret || ''}
+            onChange={(e) => onChange({ stripeWebhookSecret: e.target.value })}
+            className={`${inputCls} pr-12 font-mono`}
+            placeholder={settings.stripeWebhookSecretConfigured ? '••••••••' : 'whsec_...'}
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            onClick={() => setShowWebhook((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-xs font-semibold"
+          >
+            {showWebhook ? 'Hide' : 'Show'}
+          </button>
+        </div>
+      </Field>
+
+      {syncResult && (
+        <div className="p-4 rounded-xl text-sm border font-medium bg-emerald-500/10 border-emerald-500/20 text-emerald-300">
+          ✓ Sync complete. Synced plans: {syncResult.join(', ') || 'none (all Free)'}.
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3 pt-2 border-t border-slate-800">
+        <button
+          id="sync-plans-stripe"
+          type="button"
+          onClick={handleSyncPlans}
+          disabled={syncing || !settings.stripeEnabled}
+          className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-500/15 border border-indigo-500/25 text-indigo-300 hover:bg-indigo-500/25 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {syncing ? (
+            <span className="flex items-center gap-2">
+              <span className="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full" />
+              Syncing plans…
+            </span>
+          ) : (
+            '🔄 Sync Plans'
+          )}
+        </button>
+
+        <button
+          id="test-stripe-connection"
+          type="button"
+          onClick={handleTestConnection}
+          disabled={testingConnection || !settings.stripePublishableKey || !settings.stripeSecretKeyConfigured && !settings.stripeSecretKey}
+          className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-500/15 border border-indigo-500/25 text-indigo-300 hover:bg-indigo-500/25 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {testingConnection ? (
+            <span className="flex items-center gap-2">
+              <span className="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full" />
+              Testing…
+            </span>
+          ) : (
+            '🔌 Test Connection'
+          )}
+        </button>
+
+        <SaveButton saving={saving} onSave={onSave} lastSaved={lastSaved} />
+      </div>
+    </div>
+  );
+}
+

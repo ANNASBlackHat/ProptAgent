@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Unit, { UnitStatus } from '@/models/Unit';
+import { checkListingLimit } from '@/lib/planLimits';
 
 type Context = { params: { id: string } };
 
@@ -29,6 +30,23 @@ async function patchUnitStatus(req: AuthenticatedRequest, context: unknown) {
         },
         { status: 400 }
       );
+    }
+
+    // Enforce listing limit if setting status to available
+    if (status === 'available') {
+      const limitCheck = await checkListingLimit(req.user!.userId);
+      if (!limitCheck.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'PLAN_LIMIT_EXCEEDED',
+            message: limitCheck.reason,
+            limit: limitCheck.limit,
+            upgradeUrl: '/billing',
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const unit = await Unit.findOneAndUpdate(

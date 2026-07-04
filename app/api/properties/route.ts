@@ -5,6 +5,7 @@ import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import Property from '@/models/Property';
 import Unit from '@/models/Unit';
 import { sanitizeObject } from '@/lib/sanitize';
+import { checkPropertyLimit } from '@/lib/planLimits';
 
 
 // GET /api/properties — list landlord's own properties with unit counts
@@ -69,6 +70,21 @@ async function createProperty(req: AuthenticatedRequest) {
   try {
     await dbConnect();
 
+    // Enforce property plan limits
+    const limitCheck = await checkPropertyLimit(req.user!.userId);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'PLAN_LIMIT_EXCEEDED',
+          message: limitCheck.reason,
+          limit: limitCheck.limit,
+          upgradeUrl: '/billing',
+        },
+        { status: 403 }
+      );
+    }
+
     const rawBody = await req.json();
     const body = sanitizeObject(rawBody);
 
@@ -103,3 +119,4 @@ async function createProperty(req: AuthenticatedRequest) {
 
 export const GET = withAuth(getProperties, ['landlord', 'super_admin']);
 export const POST = withAuth(createProperty, ['landlord', 'super_admin']);
+export const dynamic = 'force-dynamic';

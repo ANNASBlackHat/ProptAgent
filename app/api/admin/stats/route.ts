@@ -53,3 +53,4 @@ async function handler(_req: AuthenticatedRequest): Promise<Response> {
 }
 
 export const GET = withAuth(handler, ['super_admin']);
+export const dynamic = 'force-dynamic';

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import ApplicationStatusBadge from '@/components/ApplicationStatusBadge';
 import { ApplicationStatus } from '@/models/Application';
 import AIScoreCard from '@/components/AIScoreCard';
@@ -92,26 +92,12 @@ function InfoRow({ label, value }: { label: string; value?: string | number }) {
   );
 }
 
-function ScoreBar({ label, value }: { label: string; value: number }) {
-  const color = value >= 7 ? 'bg-emerald-500' : value >= 4 ? 'bg-amber-500' : 'bg-red-500';
-  return (
-    <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span className="text-slate-400">{label}</span>
-        <span className="text-slate-300 font-semibold">{value}/10</span>
-      </div>
-      <div className="w-full bg-slate-800 rounded-full h-1.5">
-        <div className={`${color} h-1.5 rounded-full transition-all duration-700`} style={{ width: `${(value / 10) * 100}%` }} />
-      </div>
-    </div>
-  );
-}
+
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
 export default function ApplicationDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params?.id as string;
 
   const [application, setApplication] = useState<FullApplication | null>(null);
@@ -133,11 +119,9 @@ export default function ApplicationDetailPage() {
 
   // Poll for AI score once the interview is completed and score is not yet available
   useEffect(() => {
-    if (!application) return;
-
-    const needsPolling =
-      application.interviewStatus === 'completed' &&
-      !application.aiScore;
+    const interviewStatus = application?.interviewStatus;
+    const aiScore = application?.aiScore;
+    const needsPolling = interviewStatus === 'completed' && !aiScore;
 
     if (!needsPolling) return;
 

@@ -42,17 +42,21 @@ export async function comparePassword(password: string, hash: string): Promise<b
  * Sign JWT token
  */
 export function signToken(payload: Omit<DecodedToken, 'iat' | 'exp'>): string {
-  const secret = JWT_SECRET || 'fallback-secret-for-build-and-dev';
-  return jwt.sign(payload, secret, { expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] });
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not defined');
+  }
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] });
 }
 
 /**
  * Verify JWT token
  */
 export function verifyToken(token: string): DecodedToken | null {
-  const secret = JWT_SECRET || 'fallback-secret-for-build-and-dev';
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not defined');
+  }
   try {
-    return jwt.verify(token, secret) as DecodedToken;
+    return jwt.verify(token, JWT_SECRET) as DecodedToken;
   } catch {
     return null;
   }

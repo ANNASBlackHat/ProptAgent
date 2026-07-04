@@ -28,6 +28,13 @@ async function getHandler(_req: AuthenticatedRequest): Promise<Response> {
         smtpPass: settings.smtpPass ? '••••••••' : '',
         smtpPassConfigured: !!settings.smtpPass,
         smtpFrom: settings.smtpFrom,
+        stripePublishableKey: (settings as any).stripePublishableKey || '',
+        stripeSecretKey: (settings as any).stripeSecretKey ? '••••••••••••••••' : '',
+        stripeSecretKeyConfigured: !!(settings as any).stripeSecretKey,
+        stripeWebhookSecret: (settings as any).stripeWebhookSecret ? '••••••••••••••••' : '',
+        stripeWebhookSecretConfigured: !!(settings as any).stripeWebhookSecret,
+        stripeCurrency: (settings as any).stripeCurrency || 'usd',
+        stripeEnabled: (settings as any).stripeEnabled || false,
         emailTemplates: settings.emailTemplates,
         updatedAt: settings.updatedAt,
       },
@@ -93,6 +100,33 @@ async function putHandler(req: AuthenticatedRequest): Promise<Response> {
       settings.smtpPass = '';
     }
 
+    // Stripe config
+    if (body.stripePublishableKey !== undefined) (settings as any).stripePublishableKey = body.stripePublishableKey;
+    if (body.stripeCurrency !== undefined) (settings as any).stripeCurrency = body.stripeCurrency;
+    if (body.stripeEnabled !== undefined) (settings as any).stripeEnabled = body.stripeEnabled;
+
+    if (body.stripeSecretKey !== undefined) {
+      if (body.stripeSecretKey === '') {
+        (settings as any).stripeSecretKey = '';
+      } else if (!body.stripeSecretKey.includes('•')) {
+        (settings as any).stripeSecretKey = encryptField(body.stripeSecretKey);
+      }
+    }
+    if (body.clearStripeSecretKey) {
+      (settings as any).stripeSecretKey = '';
+    }
+
+    if (body.stripeWebhookSecret !== undefined) {
+      if (body.stripeWebhookSecret === '') {
+        (settings as any).stripeWebhookSecret = '';
+      } else if (!body.stripeWebhookSecret.includes('•')) {
+        (settings as any).stripeWebhookSecret = encryptField(body.stripeWebhookSecret);
+      }
+    }
+    if (body.clearStripeWebhookSecret) {
+      (settings as any).stripeWebhookSecret = '';
+    }
+
     // Email templates
     if (body.emailTemplates) {
       const tpl = body.emailTemplates;
@@ -136,3 +170,4 @@ async function putHandler(req: AuthenticatedRequest): Promise<Response> {
 
 export const GET = withAuth(getHandler, ['super_admin']);
 export const PUT = withAuth(putHandler, ['super_admin']);
+export const dynamic = 'force-dynamic';
