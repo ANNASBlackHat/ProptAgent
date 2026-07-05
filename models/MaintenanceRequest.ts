@@ -99,15 +99,9 @@ const MaintenanceRequestSchema = new Schema<IMaintenanceRequest>(
       maxlength: [1000, 'Description cannot exceed 1000 characters'],
     },
     photos: {
-      type: [
-        {
-          url: { type: String, default: '' },
-          fileId: { type: String, default: '' },
-          provider: { type: String, default: '' },
-        },
-      ],
+      type: [Schema.Types.Mixed] as any,
       validate: {
-        validator: function (val: IStoredFile[]) {
+        validator: function (val: any[]) {
           return val.length <= 3;
         },
         message: 'You can upload a maximum of 3 photos',

@@ -134,7 +134,7 @@ const defaultTemplates = {
 const SystemSettingsSchema = new Schema<ISystemSettings>(
   {
     appName: { type: String, default: 'PropAgent' },
-    appLogo: { type: StoredFileSchema, default: () => ({ url: '', fileId: '', provider: '' }) },
+    appLogo: { type: Schema.Types.Mixed, default: () => ({ url: '', fileId: '', provider: '' }) },
     aiProvider: { type: String, default: 'openai' },
     aiBaseUrl: { type: String, default: '' },
     aiApiKey: { type: String, default: '' }, // stored encrypted

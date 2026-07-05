@@ -13,16 +13,30 @@ export async function uploadFile(
   file: Buffer,
   filename: string,
   folder: string,      // e.g. 'properties', 'units', 'leases', 'avatars'
-  mimeType: string
+  mimeType: string,
+  overrides?: {
+    provider?: string;
+    publicKey?: string;
+    privateKey?: string;
+    urlEndpoint?: string;
+  }
 ): Promise<UploadResult> {
-  await dbConnect();
-  const settings = await SystemSettings.getSingleton();
-  const provider = settings.storageProvider || process.env.STORAGE_PROVIDER || 'local';
+  const provider = overrides?.provider || (await getProvider());
 
   if (provider === 'imagekit') {
-    return uploadToImageKit(file, filename, folder, mimeType);
+    return uploadToImageKit(file, filename, folder, mimeType, overrides);
   } else {
     return uploadToLocal(file, filename, folder, mimeType);
+  }
+}
+
+async function getProvider(): Promise<string> {
+  try {
+    await dbConnect();
+    const settings = await SystemSettings.getSingleton();
+    return settings.storageProvider || process.env.STORAGE_PROVIDER || 'local';
+  } catch {
+    return process.env.STORAGE_PROVIDER || 'local';
   }
 }
 
@@ -30,20 +44,30 @@ export async function uploadToImageKit(
   file: Buffer,
   filename: string,
   folder: string,
-  mimeType: string
+  mimeType: string,
+  overrides?: {
+    publicKey?: string;
+    privateKey?: string;
+    urlEndpoint?: string;
+  }
 ): Promise<UploadResult> {
   await dbConnect();
   const settings = await SystemSettings.getSingleton();
 
-  const publicKey = settings.imagekitPublicKey || process.env.IMAGEKIT_PUBLIC_KEY || '';
-  const privateKeyEncrypted = settings.imagekitPrivateKey;
+  const publicKey = overrides?.publicKey || settings.imagekitPublicKey || process.env.IMAGEKIT_PUBLIC_KEY || '';
+  
   let privateKey = '';
-  if (privateKeyEncrypted) {
-    privateKey = decryptField(privateKeyEncrypted);
+  if (overrides?.privateKey && !overrides.privateKey.includes('•') && overrides.privateKey !== '') {
+    privateKey = overrides.privateKey;
   } else {
-    privateKey = process.env.IMAGEKIT_PRIVATE_KEY || '';
+    const privateKeyEncrypted = settings.imagekitPrivateKey;
+    if (privateKeyEncrypted) {
+      privateKey = decryptField(privateKeyEncrypted);
+    } else {
+      privateKey = process.env.IMAGEKIT_PRIVATE_KEY || '';
+    }
   }
-  const urlEndpoint = settings.imagekitUrlEndpoint || process.env.IMAGEKIT_URL_ENDPOINT || '';
+  const urlEndpoint = overrides?.urlEndpoint || settings.imagekitUrlEndpoint || process.env.IMAGEKIT_URL_ENDPOINT || '';
 
   if (!publicKey || !privateKey || !urlEndpoint) {
     throw new Error('ImageKit is not fully configured (missing public key, private key, or URL endpoint)');

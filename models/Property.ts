@@ -56,13 +56,7 @@ const PropertySchema = new Schema<IProperty>(
       maxlength: [2000, 'Description cannot exceed 2000 characters'],
     },
     photos: {
-      type: [
-        {
-          url: { type: String, default: '' },
-          fileId: { type: String, default: '' },
-          provider: { type: String, default: '' },
-        },
-      ],
+      type: [Schema.Types.Mixed] as any,
       default: [],
     },
     isActive: {

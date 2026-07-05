@@ -984,6 +984,12 @@ function StorageTab({
       const res = await fetch('/api/admin/settings/test-storage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storageProvider: settings.storageProvider,
+          imagekitPublicKey: settings.imagekitPublicKey,
+          imagekitPrivateKey: settings.imagekitPrivateKey,
+          imagekitUrlEndpoint: settings.imagekitUrlEndpoint,
+        }),
       });
       const data = await res.json();
       if (data.success) {

@@ -82,9 +82,7 @@ const UserSchema = new Schema<IUser>({
     },
   },
   logo: {
-    url: { type: String, default: '' },
-    fileId: { type: String, default: '' },
-    provider: { type: String, default: '' },
+    type: Schema.Types.Mixed,
   },
   phone: {
     type: String,
