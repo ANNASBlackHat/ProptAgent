@@ -13,6 +13,12 @@ export interface IUser extends Document {
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   screeningQuestions?: string[];
+  notificationPreferences: {
+    newApplication: boolean;
+    leaseExpiring: boolean;
+    maintenanceSubmitted: boolean;
+    paymentPastDue: boolean;
+  };
   createdAt: Date;
   
   // Subscription fields
@@ -85,6 +91,12 @@ const UserSchema = new Schema<IUser>({
   screeningQuestions: {
     type: [String],
     default: [],
+  },
+  notificationPreferences: {
+    newApplication: { type: Boolean, default: true },
+    leaseExpiring: { type: Boolean, default: true },
+    maintenanceSubmitted: { type: Boolean, default: true },
+    paymentPastDue: { type: Boolean, default: true },
   },
   createdAt: {
     type: Date,

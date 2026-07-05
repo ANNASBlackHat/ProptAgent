@@ -239,6 +239,33 @@ export async function POST(
       console.error('Confirmation email failed:', emailErr);
     }
 
+    // Send email notification to landlord
+    try {
+      const landlord = await User.findById(unit.landlordId);
+      if (landlord && landlord.notificationPreferences?.newApplication !== false) {
+        await sendEmail(
+          landlord.email,
+          `📋 New Rental Application Received — ${property.name}, Unit ${unit.unitNumber}`,
+          `
+            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0f172a;color:#e2e8f0;padding:32px;border-radius:12px;">
+              <h2 style="color:#60a5fa;margin-top:0">New Rental Application</h2>
+              <p>Hi <strong>${landlord.name}</strong>,</p>
+              <p>You have received a new rental application for:</p>
+              <div style="background:#1e293b;border-radius:8px;padding:16px;margin:16px 0;">
+                <p style="margin:4px 0;"><strong>Property:</strong> ${property.name}</p>
+                <p style="margin:4px 0;"><strong>Unit:</strong> ${unit.unitNumber}</p>
+                <p style="margin:4px 0;"><strong>Applicant Name:</strong> ${tenantInfo.name}</p>
+                <p style="margin:4px 0;"><strong>Applicant Email:</strong> ${tenantInfo.email}</p>
+              </div>
+              <p>Please log in to your dashboard to review the application and start the screening process.</p>
+            </div>
+          `
+        );
+      }
+    } catch (landlordEmailErr) {
+      console.error('Landlord notification email failed:', landlordEmailErr);
+    }
+
     return NextResponse.json({
       success: true,
       data: {

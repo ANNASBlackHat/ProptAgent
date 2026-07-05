@@ -157,7 +157,7 @@ async function createMaintenanceRequest(req: AuthenticatedRequest) {
       User.findById(tenantId).lean(),
     ]);
 
-    if (landlord) {
+    if (landlord && landlord.notificationPreferences?.maintenanceSubmitted !== false) {
       const urgencyLabels: Record<string, string> = {
         low: '🟢 Low',
         medium: '🟡 Medium',

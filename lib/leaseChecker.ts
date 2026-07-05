@@ -38,7 +38,7 @@ export async function checkExpiringLeases(): Promise<{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const unit = lease.unitId as any;
 
-    if (landlord && landlord.email) {
+    if (landlord && landlord.email && landlord.notificationPreferences?.leaseExpiring !== false) {
       try {
         const formattedEndDate = new Date(lease.endDate).toLocaleDateString('en-US', {
           year: 'numeric',

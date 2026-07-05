@@ -134,7 +134,7 @@ async function createCheckoutHandler(req: AuthenticatedRequest): Promise<Respons
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/api/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/billing/cancelled`,
       metadata: {
         landlordId: landlord._id.toString(),

@@ -162,10 +162,12 @@ export async function POST(req: Request): Promise<Response> {
           });
 
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-          await sendPaymentFailedEmail(landlord.email, {
-            planName: landlord.planSlug || 'Premium',
-            updatePaymentUrl: `${appUrl}/billing`,
-          });
+          if (landlord.notificationPreferences?.paymentPastDue !== false) {
+            await sendPaymentFailedEmail(landlord.email, {
+              planName: landlord.planSlug || 'Premium',
+              updatePaymentUrl: `${appUrl}/billing`,
+            });
+          }
           console.log(`[Stripe Webhook] Payment failed. Set past_due on Landlord ID: ${landlord._id}`);
         }
         break;
