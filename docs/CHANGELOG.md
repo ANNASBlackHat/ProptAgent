@@ -4,24 +4,39 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [1.0.0] - 2026-07-02
+## v1.0.0 — Initial Release
 
-### Added
-- **Initial Release of PropAgent** - An AI-powered tenant screening and property management system.
-- **AI Screening Engine**: Conversational chatbot screening system for applicants. Conducting interviews regarding employment, current housing, references, and financial profiles.
-- **AI Scoring System**: Automatically parses transcripts to grade applicants (0-100) and identify critical screening red flags.
-- **Property & Unit Module**: Full landlord interface to manage properties, track unit availability, set rent/deposits, and upload unit photos.
-- **Lease Ledger**: Digital lease tracking, including custom special terms, lease extensions, and manual rent payment logging.
-- **Tenant Portal**: Dedicated dashboard for tenants to review active lease agreements, check rent status, download receipts, and submit maintenance requests.
-- **Maintenance Tracker**: Maintenance request submission for tenants (with urgency and photo attachments), and management/filtering dashboard for landlords.
-- **Super Admin Panel**: Full administrative visibility over landlords, tenants, properties, and system-wide audits.
-- **Global Error Handling**: Custom class-based `ErrorBoundary` and branded pages for 404/500 scenarios.
-- **Custom Toast Notification System**: Custom notification banner UI with slide-in animations.
-- **Local Database Seeding**: Pre-loaded, idempotent seeder script (`npm run seed`) creating complete landlord/tenant/admin demo datasets.
+### Core Features
+- Multi-role authentication (Super Admin, Landlord, Tenant)
+- Property and unit management with photo galleries
+- Public tenant application form (multi-step)
+- AI tenant screening interview (async, chat-based)
+- AI applicant scoring with structured JSON output
+- Lease management with payment logging
+- Maintenance request system
+- Landlord and tenant dashboards
+- Super admin panel
 
-### Security & Optimization
-- **API Rate Limiting**: Added sliding-window in-memory rate limiting to auth endpoints (max 10 attempts/15m) and application portals (max 3 submissions/hour).
-- **Input Sanitization**: Implemented HTML tag stripping sanitization utility recursively executed on user inputs before database storage.
-- **Secure File Storage**: Type, mimetype, and size validation on all uploaded files.
-- **Database Ownership Audits**: Complete backend checks to ensure landlords can only modify/view their own assets and tenants only view their own active lease details.
-- **UI Skeletons**: Swapped loading spinners for native, high-fidelity table and card pulsing skeletons (`animate-pulse`) across all landlord list views and dashboard panels.
+### Subscription & Billing
+- Stripe-powered subscription billing
+- 3 default plans: Free, Pro, Business
+- Customizable plan limits per feature
+- Automatic limit enforcement on all key actions
+- Trial period support
+- Stripe webhook lifecycle handling
+- Landlord billing portal (upgrade, cancel, invoices)
+- Revenue dashboard (MRR, ARR, per-plan breakdown)
+- Manual plan override for super admin
+
+### AI & Integrations
+- Multi-provider AI support (OpenAI, OpenRouter, Gemini, Custom)
+- Configurable AI provider from admin UI (no server restart needed)
+- BYOK (Bring Your Own Key) for all third-party services
+- SMTP email with customizable templates
+
+### Developer Experience
+- Docker Compose deployment
+- Comprehensive environment variable documentation
+- Seed script with realistic demo data
+- Full installation documentation
+

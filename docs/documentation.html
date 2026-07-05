@@ -727,6 +727,28 @@
         font-size: 2.25rem;
       }
     }
+
+    .screenshot-placeholder {
+      background-color: var(--bg-tertiary);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+      margin: 16px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .screenshot-placeholder svg {
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+    .screenshot-placeholder .placeholder-text {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -777,7 +799,6 @@
 
     <!-- Table of Contents -->
     <nav class="sidebar-nav">
-      <ul class="nav-list">
         <li class="nav-item active" data-sec="introduction"><a href="#introduction">1. Introduction</a></li>
         <li class="nav-item" data-sec="requirements"><a href="#requirements">2. System Requirements</a></li>
         <li class="nav-item" data-sec="installation"><a href="#installation">3. Installation Guide</a></li>
@@ -787,9 +808,15 @@
         <li class="nav-item" data-sec="email-setup"><a href="#email-setup">7. Email SMTP Setup</a></li>
         <li class="nav-item" data-sec="user-roles"><a href="#user-roles">8. User Roles Explained</a></li>
         <li class="nav-item" data-sec="features"><a href="#features">9. Feature Walkthrough</a></li>
-        <li class="nav-item" data-sec="customization"><a href="#customization">10. Customization Guide</a></li>
-        <li class="nav-item" data-sec="troubleshooting"><a href="#troubleshooting">11. Troubleshooting FAQs</a></li>
-        <li class="nav-item" data-sec="support"><a href="#support">12. Support & Credits</a></li>
+        <li class="nav-item" data-sec="billing"><a href="#billing">10. Subscription & Billing</a></li>
+        <li class="nav-item" data-sec="billing-how-it-works" style="padding-left: 15px;"><a href="#billing-how-it-works" style="font-size: 0.85rem; padding: 6px 12px;">↳ How It Works</a></li>
+        <li class="nav-item" data-sec="billing-managing-plans" style="padding-left: 15px;"><a href="#billing-managing-plans" style="font-size: 0.85rem; padding: 6px 12px;">↳ Managing Plans</a></li>
+        <li class="nav-item" data-sec="billing-stripe-setup" style="padding-left: 15px;"><a href="#billing-stripe-setup" style="font-size: 0.85rem; padding: 6px 12px;">↳ Stripe Setup</a></li>
+        <li class="nav-item" data-sec="billing-landlord-experience" style="padding-left: 15px;"><a href="#billing-landlord-experience" style="font-size: 0.85rem; padding: 6px 12px;">↳ Landlord Billing</a></li>
+        <li class="nav-item" data-sec="billing-revenue-dashboard" style="padding-left: 15px;"><a href="#billing-revenue-dashboard" style="font-size: 0.85rem; padding: 6px 12px;">↳ Revenue Dashboard</a></li>
+        <li class="nav-item" data-sec="customization"><a href="#customization">11. Customization Guide</a></li>
+        <li class="nav-item" data-sec="troubleshooting"><a href="#troubleshooting">12. Troubleshooting FAQs</a></li>
+        <li class="nav-item" data-sec="support"><a href="#support">13. Support & Credits</a></li>
       </ul>
     </nav>
 
@@ -892,7 +919,7 @@
         </div>
       </div>
 
-      <p>To enable the full scope of AI screening capabilities, a billing-active API Key is required from an LLM provider such as OpenAI (recommend GPT-4o-mini), OpenRouter, or Google Gemini.</p>
+      <p>To enable the full scope of AI screening capabilities, a billing-active API Key is required from an LLM provider such as OpenAI (recommend GPT-4o-mini), OpenRouter, or Google Gemini. Additionally, a free Stripe account is required for platform-wide subscription billing configuration.</p>
     </section>
 
     <!-- SECTION 3: INSTALLATION GUIDE -->
@@ -1344,7 +1371,7 @@ npm run start</code></pre>
           </div>
           <div class="grid-card-title">Super Admin</div>
           <div class="grid-card-text">
-            The platform owner. Super Admins manage the platform settings, configure the system-wide AI and SMTP credentials, audit registrations, view metrics across all landlords, and activate or deactivate landlord accounts.
+            The platform owner. Super Admins manage the platform settings, configure the system-wide AI and SMTP credentials, manage subscription plans, view revenue analytics, configure Stripe settings, audit registrations, view metrics across all landlords, and activate or deactivate landlord accounts.
           </div>
         </div>
 
@@ -1357,7 +1384,7 @@ npm run start</code></pre>
           </div>
           <div class="grid-card-title">Landlord / Property Manager</div>
           <div class="grid-card-text">
-            The primary system user. Landlords register their property lists, configure custom units, view dashboards containing active tenant stats, review AI-graded applicant summaries, issue leases, manually log payments, and track maintenance tickets.
+            The primary system user. Landlords register their property lists, configure custom units, subscribe to subscription plans, manage their billing and invoices at `/billing`, view dashboards containing active tenant stats, review AI-graded applicant summaries, issue leases, manually log payments, and track maintenance tickets.
           </div>
         </div>
 
@@ -1370,7 +1397,7 @@ npm run start</code></pre>
           </div>
           <div class="grid-card-title">Tenant (and Applicant)</div>
           <div class="grid-card-text">
-            End users. Applicants fill out rental applications online and complete the interactive AI screening interviews. Approved tenants use their portal to review active lease agreements, check rent status, view payment history, and report maintenance issues.
+            End users. Applicants fill out rental applications online and complete the interactive AI screening interviews. Approved tenants use their portal to review active lease agreements, check rent status, view payment history, and report maintenance issues (with no billing involvement).
           </div>
         </div>
       </div>
@@ -1403,12 +1430,270 @@ npm run start</code></pre>
 
       <h3>🔒 Security and Rate Limiting Utilities</h3>
       <p>PropAgent includes sliding-window rate limiters to protect authentication routes (max 10 attempts/15 mins) and screening portals (max 3 applications/hour). Recursive input sanitization strips HTML tags to protect the database, and ownership audits prevent unauthorized access to records.</p>
+
+      <h3>💳 Subscription & SaaS Billing Module</h3>
+      <p>PropAgent is fully equipped for SaaS operations. Super admins can create, customize, and feature subscription plans (Free, Pro, Business) directly from the dashboard. The system automatically enforces feature-level limits (such as limits on the number of properties, units, or AI screenings). Landlords can manage their subscriptions self-service using the integrated Stripe Customer Portal, which handles card updates, cancellations, and invoices.</p>
     </section>
 
-    <!-- SECTION 10: CUSTOMIZATION GUIDE -->
+    <!-- SECTION 10: SUBSCRIPTION & BILLING -->
+    <section id="billing">
+      <h2>
+        <span style="color: var(--accent);">10.</span> Subscription & Billing
+      </h2>
+      <p>PropAgent is fully prepared for commercial operations with a built-in Stripe SaaS subscription model. You can charge landlords recurring fees, enforce feature-level limits, and allow self-service subscription management.</p>
+
+      <h3 id="billing-how-it-works">How It Works</h3>
+      <p>PropAgent is designed to be run as a SaaS business. You (the platform operator) charge landlords a subscription fee. Landlords manage their properties and tenants on your platform. Tenants use the platform for free.</p>
+
+      <!-- Business model flow diagram -->
+      <div style="display: flex; justify-content: center; align-items: center; gap: 16px; margin: 24px 0; background: var(--bg-tertiary); padding: 24px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;">
+        <div style="background: var(--accent-light); color: var(--accent); padding: 12px 20px; border-radius: 8px; font-weight: 600; text-align: center; box-shadow: var(--shadow);">You (Platform Operator)</div>
+        <div style="color: var(--text-secondary); font-size: 1.25rem;">➔ sells access to ➔</div>
+        <div style="background: var(--bg-secondary); color: var(--text-primary); padding: 12px 20px; border-radius: 8px; font-weight: 600; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow);">Landlords</div>
+        <div style="color: var(--text-secondary); font-size: 1.25rem;">➔ manage ➔</div>
+        <div style="background: var(--bg-secondary); color: var(--text-secondary); padding: 12px 20px; border-radius: 8px; font-weight: 600; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow);">Tenants</div>
+      </div>
+
+      <p>Subscriptions in PropAgent flow through standard lifecycle statuses, mapped directly to their Stripe state:</p>
+      
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Description</th>
+              <th>Access Granted</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>trialing</code></td>
+              <td>Landlord is in an active trial period without being billed yet.</td>
+              <td>Full access matching their selected trial plan.</td>
+            </tr>
+            <tr>
+              <td><code>active</code></td>
+              <td>The subscription is active, and payments are up to date.</td>
+              <td>Full access matching the active plan limits.</td>
+            </tr>
+            <tr>
+              <td><code>past_due</code></td>
+              <td>A payment failed. Stripe is retrying payment collection.</td>
+              <td>Full access, but warning banners prompt the user to update cards.</td>
+            </tr>
+            <tr>
+              <td><code>cancelled</code></td>
+              <td>The user has cancelled billing, but the current billing cycle is still active.</td>
+              <td>Access continues until the end of the current billing cycle.</td>
+            </tr>
+            <tr>
+              <td><code>expired</code></td>
+              <td>The subscription is fully terminated, or trial expired without payment.</td>
+              <td>No access to premium landlord dashboards/actions. Restricted back to Free limits.</td>
+            </tr>
+            <tr>
+              <td><code>none</code></td>
+              <td>No active subscription record exists (e.g. initial registration).</td>
+              <td>Defaults to the base Free plan limits.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="billing-managing-plans">Managing Plans</h3>
+      <p>Platform operators can view, edit, and create subscription packages directly from the Super Admin dashboard:</p>
+      <ul>
+        <li><strong>Access Path</strong>: Log in as Super Admin → Navigate to the <strong>Plans</strong> page.</li>
+        <li><strong>Default Seeding</strong>: Seeding details are described in the setup section below, establishing Free, Pro ($29/mo), and Business ($79/mo) plans.</li>
+        <li><strong>Creating Custom Plans</strong>: Click <em>Add New Plan</em>, specify details, monthly price, trial days, and feature limits.</li>
+        <li><strong>Feature Plan Toggle</strong>: Check the "Featured" option on a plan to render a prominent "Most Popular" highlight on the registration and billing pricing cards.</li>
+        <li><strong>Subscribers Dependency Warning</strong>: To protect database integrity and active payment routes, you cannot delete a subscription plan that has active subscribers. Delete options are deactivated for populated plans.</li>
+      </ul>
+
+      <p>Each subscription plan enforces limits across key features:</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Limit Type</th>
+              <th>Scope & Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Properties Limit</strong></td>
+              <td>The total number of properties a landlord is allowed to add to their portfolio.</td>
+            </tr>
+            <tr>
+              <td><strong>Units Limit</strong></td>
+              <td>The total number of rental units across all property addresses.</td>
+            </tr>
+            <tr>
+              <td><strong>AI Screenings Limit</strong></td>
+              <td>The maximum number of candidate interviews conducted by the AI agent per billing cycle.</td>
+            </tr>
+            <tr>
+              <td><strong>Lease Limit</strong></td>
+              <td>The maximum number of digital leases and payment ledger logs that can be registered.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="billing-stripe-setup">Stripe Setup Guide</h3>
+      <p>Configure Stripe API communication and sync products with your platform setting tabs:</p>
+
+      <ol>
+        <li><strong>Prerequisites</strong>: Create a free developer or merchant account at <a href="https://stripe.com" class="doc-link" target="_blank">stripe.com</a>.</li>
+        <li><strong>Get API keys</strong>: Go to Stripe Dashboard → Developers → API Keys. Copy the <strong>Publishable Key</strong> and <strong>Secret Key</strong>.</li>
+        <li><strong>Enter keys</strong>: Paste the credentials under Admin Panel → Settings → Stripe Config tab and click <em>Save Config</em>.</li>
+        <li><strong>Sync Plans</strong>: Click <strong>"Sync Plans to Stripe"</strong>. The platform will automatically push your local database plans as Products and Prices in Stripe.</li>
+        <li><strong>Set up webhook</strong>:
+          <ul>
+            <li><strong>LOCAL DEV</strong>:
+              <ul>
+                <li>Install Stripe CLI: <code>brew install stripe/stripe-cli/stripe</code></li>
+                <li>Log in: <code>stripe login</code></li>
+                <li>Forward events: <code>stripe listen --forward-to localhost:3000/api/webhooks/stripe</code></li>
+                <li>Copy the displayed signing secret (<code>whsec_...</code>) and place it under <code>STRIPE_WEBHOOK_SECRET</code> in <code>.env.local</code>.</li>
+              </ul>
+            </li>
+            <li><strong>PRODUCTION</strong>:
+              <ul>
+                <li>Go to Stripe Dashboard → Developers → Webhooks → Add Endpoint.</li>
+                <li>Set URL to: <code>https://yourdomain.com/api/webhooks/stripe</code></li>
+                <li>Select the events: <code>checkout.session.completed</code>, <code>customer.subscription.updated</code>, <code>customer.subscription.deleted</code>, <code>customer.subscription.trial_will_end</code>, <code>invoice.payment_failed</code>, <code>invoice.payment_succeeded</code></li>
+                <li>Copy the production signing secret to <code>STRIPE_WEBHOOK_SECRET</code> in your production environment variables.</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><strong>Test</strong>: Complete trial payments and checkout testing using test card number <code>4242 4242 4242 4242</code> (enter any future date and 3-digit CVC).</li>
+        <li><strong>Go Live</strong>: Swap test API keys for live keys in your Admin Panel settings when ready to accept real payments.</li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <div class="placeholder-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <div class="placeholder-text">[Screenshot: Admin → Settings → Stripe Config tab]</div>
+      </div>
+
+      <div class="screenshot-placeholder">
+        <div class="placeholder-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <div class="placeholder-text">[Screenshot: Stripe Dashboard → Webhooks page]</div>
+      </div>
+
+      <h3 id="billing-landlord-experience">Landlord Billing Experience</h3>
+      <p>The billing flow is built to be self-service and low-friction for landlords:</p>
+      <ol>
+        <li><strong>Registration</strong>: Upon creating a landlord account, the system automatically assigns them to the default **Free** plan.</li>
+        <li><strong>Encountering Limits</strong>: If a landlord attempts to add more properties or units than allowed, a warning alert triggers redirecting them to the Billing section.</li>
+        <li><strong>Plan Upgrade Selection</strong>: Landlords navigate to <code>/billing</code> to compare the features of the Free, Pro, and Business plans.</li>
+        <li><strong>Stripe Checkout Session</strong>: Clicking <em>Upgrade</em> securely redirects the landlord to Stripe Checkout with your pre-synced prices.</li>
+        <li><strong>Dashboard Return</strong>: Once payment succeeds, the landlord returns to your app, and webhooks instantaneously upgrade their plan in your database.</li>
+        <li><strong>Self-Service Billing Portal</strong>: At any time, landlords can click <em>Manage Billing</em> on <code>/billing</code> to access the Stripe Customer Portal, allowing them to download payment invoices, update card credentials, or switch/cancel plans.</li>
+      </ol>
+
+      <p>Here are the default limits applied to each tier:</p>
+      
+      <h4>Free Plan Limits</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Property Limit</th>
+              <th>Unit Limit</th>
+              <th>AI Screenings / Mo</th>
+              <th>Lease Limit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1 Property</td>
+              <td>1 Unit</td>
+              <td>3 Screenings</td>
+              <td>1 Active Lease</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Pro Plan Limits ($29/mo)</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Property Limit</th>
+              <th>Unit Limit</th>
+              <th>AI Screenings / Mo</th>
+              <th>Lease Limit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>5 Properties</td>
+              <td>10 Units</td>
+              <td>25 Screenings</td>
+              <td>10 Active Leases</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Business Plan Limits ($79/mo)</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Property Limit</th>
+              <th>Unit Limit</th>
+              <th>AI Screenings / Mo</th>
+              <th>Lease Limit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Unlimited</td>
+              <td>Unlimited</td>
+              <td>Unlimited</td>
+              <td>Unlimited</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="billing-revenue-dashboard">Revenue Dashboard (Super Admin)</h3>
+      <p>The Super Admin panel includes key SaaS analytics to monitor product metrics:</p>
+      <ul>
+        <li><strong>Dashboard Access</strong>: Log in as Super Admin → Navigate to the <strong>Subscriptions</strong> page.</li>
+        <li><strong>Metrics Explained</strong>:
+          <ul>
+            <li><strong>MRR (Monthly Recurring Revenue)</strong>: The sum of predictable monthly subscription fees generated by active landlords.</li>
+            <li><strong>ARR (Annual Recurring Revenue)</strong>: The annual forecast of recurring subscription fees, calculated as <code>MRR × 12</code>.</li>
+            <li><strong>Active Subscribers</strong>: Total count of landlords currently on paid tiers.</li>
+          </ul>
+        </li>
+        <li><strong>Manual Plan Override</strong>: Admins can manually override a landlord's active plan directly from the Landlords list, bypassing Stripe checks to offer customized access level changes.</li>
+        <li><strong>Force Cancellation</strong>: Click <em>Cancel Subscription</em> next to a landlord's record to cancel active Stripe billing records instantly.</li>
+        <li><strong>Landlord Usage Auditing</strong>: Inspect landlord records to audit current usage statistics against their plan limit counts (e.g. viewing how many AI screenings a landlord has left).</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 11: CUSTOMIZATION GUIDE -->
     <section id="customization">
       <h2>
-        <span style="color: var(--accent);">10.</span> Customization Guide
+        <span style="color: var(--accent);">11.</span> Customization Guide
       </h2>
       <p>Deployers can easily customize PropAgent's look and feel, brand name, and AI prompts to suit their needs:</p>
 
@@ -1447,7 +1732,7 @@ theme: {
     <!-- SECTION 11: TROUBLESHOOTING FAQS -->
     <section id="troubleshooting">
       <h2>
-        <span style="color: var(--accent);">11.</span> Troubleshooting FAQs
+        <span style="color: var(--accent);">12.</span> Troubleshooting FAQs
       </h2>
       <p>Resolve the most common configuration issues using these solutions:</p>
 
@@ -1482,12 +1767,28 @@ theme: {
       <h3>8. Setting decryption errors after changing <code>ENCRYPTION_KEY</code></h3>
       <p><strong>Cause:</strong> Stored settings cannot be decrypted because the encryption key changed.<br>
       <strong>Solution:</strong> If you update your <code>ENCRYPTION_KEY</code>, old credentials stored in MongoDB will fail to decrypt. Run a database command to delete the document in the <code>systemsettings</code> collection and re-run <code>npm run seed</code> to generate clean settings with your new key.</p>
+
+      <h3>9. Webhook events not received locally</h3>
+      <p><strong>Cause:</strong> Stripe CLI listener is not running or the webhook secret is out of date.<br>
+      <strong>Solution:</strong> Ensure <code>stripe listen</code> is running in a separate terminal. The signing secret changes each time you launch the CLI, so verify that the <code>STRIPE_WEBHOOK_SECRET</code> in <code>.env.local</code> matches the terminal output.</p>
+
+      <h3>10. Stripe sync fails with "No secret key configured"</h3>
+      <p><strong>Cause:</strong> You clicked "Sync Plans to Stripe" before saving your secret key.<br>
+      <strong>Solution:</strong> Navigate to **Admin → Settings → Stripe Config**, enter your Stripe Secret Key, click **Save Config**, and then click **Sync Plans to Stripe**.</p>
+
+      <h3>11. Landlord upgraded but plan didn't change</h3>
+      <p><strong>Cause:</strong> Webhook events are not being received by the application server.<br>
+      <strong>Solution:</strong> Check if your webhook listener (like <code>stripe listen</code>) is running. You can trigger a mock checkout webhook event to test integration with: <code>stripe trigger checkout.session.completed</code>.</p>
+
+      <h3>12. Plans page shows no plans</h3>
+      <p><strong>Cause:</strong> Default plan seeding was not performed.<br>
+      <strong>Solution:</strong> Send a <code>POST</code> request to <code>/api/admin/plans/seed-defaults</code>, or visit <code>/api/admin/plans/seed-defaults</code> in your browser while authenticated as a <code>super_admin</code>.</p>
     </section>
 
     <!-- SECTION 12: SUPPORT & CREDITS -->
     <section id="support">
       <h2>
-        <span style="color: var(--accent);">12.</span> Support & Credits
+        <span style="color: var(--accent);">13.</span> Support & Credits
       </h2>
       <p>Thank you for purchasing PropAgent. Below are the credits for the open-source libraries that make this project possible:</p>
       <ul>

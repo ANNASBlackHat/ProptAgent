@@ -99,6 +99,10 @@ Configure these settings inside your `.env.local` file:
 | `SMTP_USER` | Username for SMTP authentication | `your-smtp-username` |
 | `SMTP_PASS` | Password for SMTP authentication | `your-smtp-password` |
 | `SMTP_FROM` | Sender address shown on outbound emails | `noreply@propagent.com` |
+| `STRIPE_SECRET_KEY` | Stripe secret key (fallback) | `sk_test_...` |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (fallback) | `pk_test_...` |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | `whsec_...` |
+| `STRIPE_CURRENCY` | Billing currency | `usd` |
 
 ---
 
@@ -108,6 +112,40 @@ PropAgent sends emails when application screening completes, leases are generate
 
 1. **Transactional Email Server**: Fill in `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASS` using your mail provider (e.g. Resend, SendGrid, Mailgun, Amazon SES, or Mailtrap for testing).
 2. **From Address**: Ensure `SMTP_FROM` matches a verified sender domain in your email provider console to prevent emails from ending up in spam folders.
+
+---
+
+## 💳 STRIPE SETUP
+
+a) **Prerequisites**: Stripe account required (free to create at [stripe.com](https://stripe.com))
+b) **Get API keys**: Dashboard → Developers → API Keys. Copy **Publishable Key** and **Secret Key**.
+c) **Enter keys**: Enter keys in Admin Panel → Settings → Stripe Config tab.
+d) **Sync Plans**: Click "Sync Plans to Stripe" to create products in your Stripe account.
+e) **Set up webhook**:
+   - **LOCAL DEV**:
+     - Install Stripe CLI: `brew install stripe/stripe-cli/stripe`
+     - Run: `stripe login`
+     - Run: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+     - Copy the `whsec_...` value to `STRIPE_WEBHOOK_SECRET` in `.env.local`
+   - **PRODUCTION**:
+     - Stripe Dashboard → Developers → Webhooks → Add Endpoint
+     - URL: `https://yourdomain.com/api/webhooks/stripe`
+     - Select events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.trial_will_end`, `invoice.payment_failed`, `invoice.payment_succeeded`
+     - Copy signing secret to `STRIPE_WEBHOOK_SECRET` in production env
+f) **Test**: Use Stripe test card `4242 4242 4242 4242` (any future date, any CVC)
+g) **Go live**: Swap test keys for live keys in Admin → Settings → Stripe Config
+
+---
+
+## 📅 SUBSCRIPTION PLANS
+
+a) **Seed default plans**: Send a `POST` request to `/api/admin/plans/seed-defaults` or add an npm script:
+   ```json
+   "seed:plans": "curl -X POST http://localhost:3000/api/admin/plans/seed-defaults"
+   ```
+b) **Default plans created**: Free, Pro ($29/mo), Business ($79/mo)
+c) **Customize plans**: Customize plans from Admin → Plans page.
+d) **New landlord registrations**: Auto-assigned to Free plan.
 
 ---
 
@@ -138,3 +176,18 @@ PropAgent supports any OpenAI-compatible AI provider. After first login, go to A
 
 ### 4. File Upload Issues
 - Uploads are saved locally inside `public/uploads`. Make sure the Node process has read/write permission to the `public/` directory inside the project root.
+
+### 5. Webhook events not received locally
+- Ensure `stripe listen` is running in a separate terminal.
+- The webhook secret changes each time you run `stripe listen` — update `STRIPE_WEBHOOK_SECRET` in `.env.local` with the new value.
+
+### 6. Stripe sync fails with "No secret key configured"
+- Enter your Stripe Secret Key in Admin → Settings → Stripe Config and save before clicking **Sync Plans to Stripe**.
+
+### 7. Landlord upgraded but plan didn't change
+- Webhooks are not being received. Check if `stripe listen` is running.
+- Test webhook execution manually with: `stripe trigger checkout.session.completed`.
+
+### 8. Plans page shows no plans
+- Run plan seeding by sending a request: `POST /api/admin/plans/seed-defaults`.
+- Or visit `/api/admin/plans/seed-defaults` in your browser while logged in as a `super_admin`.
