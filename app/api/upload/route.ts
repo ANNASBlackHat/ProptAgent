@@ -58,17 +58,19 @@ function parseForm(
   });
 }
 
+import { uploadFile } from '@/lib/storage';
+
 async function handleUpload(req: AuthenticatedRequest): Promise<Response> {
   try {
     const userId = req.user!.userId;
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', userId);
+    const tempDir = path.join(process.cwd(), 'public', 'uploads', 'tmp');
 
-    // Ensure directory exists
-    fs.mkdirSync(uploadDir, { recursive: true });
+    // Ensure temp directory exists
+    fs.mkdirSync(tempDir, { recursive: true });
 
     let files: formidable.Files;
     try {
-      ({ files } = await parseForm(req, uploadDir));
+      ({ files } = await parseForm(req, tempDir));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'File parsing error';
       return NextResponse.json({ success: false, error: msg }, { status: 400 });
@@ -96,19 +98,31 @@ async function handleUpload(req: AuthenticatedRequest): Promise<Response> {
       }
     }
 
-    // Rename files with timestamp prefix and return public URLs
+    // Upload using storage helper and return both urls & files
+    const uploadedFiles = [];
     const urls: string[] = [];
     for (const file of fileList) {
       const originalName = file.originalFilename || 'upload';
-      const sanitized = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const finalName = `${Date.now()}-${sanitized}`;
-      const finalPath = path.join(uploadDir, finalName);
-
-      fs.renameSync(file.filepath, finalPath);
-      urls.push(`/uploads/${userId}/${finalName}`);
+      const buffer = fs.readFileSync(file.filepath);
+      const mimeType = file.mimetype || 'image/jpeg';
+      
+      const result = await uploadFile(buffer, originalName, userId, mimeType);
+      
+      // Clean up the formidable temp file
+      try {
+        fs.unlinkSync(file.filepath);
+      } catch (err) {
+        console.warn('[Upload] Failed to clean up temp file:', err);
+      }
+      
+      uploadedFiles.push(result);
+      urls.push(result.url);
     }
 
-    return NextResponse.json({ success: true, data: { urls } }, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      data: { urls, files: uploadedFiles }
+    }, { status: 200 });
   } catch (error) {
     console.error('POST /api/upload error:', error);
     return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 });

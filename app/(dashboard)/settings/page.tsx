@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import PhotoUpload from '@/components/PhotoUpload';
+import PhotoUpload, { StoredFile } from '@/components/PhotoUpload';
 
 // --- Toast Component for notification feedback ---
 interface ToastState {
@@ -37,7 +37,7 @@ export default function SettingsPage() {
   const [profileEmail, setProfileEmail] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [logo, setLogo] = useState<StoredFile | null>(null);
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('');
@@ -56,7 +56,19 @@ export default function SettingsPage() {
       setProfileEmail(user.email || '');
       setProfilePhone(user.phone || '');
       setCompanyName(user.companyName || '');
-      setLogoUrl(user.logo || '');
+      if (user.logo) {
+        if (typeof user.logo === 'string') {
+          setLogo({ url: user.logo, fileId: user.logo, provider: 'local' });
+        } else {
+          setLogo({
+            url: user.logo.url,
+            fileId: user.logo.fileId || user.logo.url,
+            provider: user.logo.provider || 'local',
+          });
+        }
+      } else {
+        setLogo(null);
+      }
     }
   }, [user]);
 
@@ -101,7 +113,7 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           companyName,
-          logo: logoUrl,
+          logo: logo,
         }),
       });
       const data = await res.json();
@@ -468,8 +480,8 @@ export default function SettingsPage() {
                 <div className="mt-1">
                   <PhotoUpload
                     maxFiles={1}
-                    existingPhotos={logoUrl ? [logoUrl] : []}
-                    onChange={(urls) => setLogoUrl(urls[0] || '')}
+                    existingPhotos={logo ? [logo] : []}
+                    onChange={(photos) => setLogo(photos[0] || null)}
                   />
                 </div>
               </div>

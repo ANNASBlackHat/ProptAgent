@@ -2,24 +2,28 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 
+export interface StoredFile {
+  url: string;
+  fileId: string;
+  provider: string;
+}
+
 interface PhotoUploadProps {
-  /** Already-persisted URLs (from the server), displayed as existing photos */
-  existingPhotos?: string[];
-  /** Called with the final merged list of URLs (existing + newly uploaded) */
-  onChange: (urls: string[]) => void;
+  /** Already-persisted URLs or objects (from the server) */
+  existingPhotos?: (string | StoredFile)[];
+  /** Called with the final merged list of objects */
+  onChange: (photos: StoredFile[]) => void;
   maxFiles?: number;
   className?: string;
 }
 
 interface PreviewItem {
-  /** Unique local key */
   id: string;
-  /** Object URL for local preview OR server URL for already-saved photos */
   src: string;
-  /** True when the photo has already been uploaded to the server */
   persisted: boolean;
-  /** Server URL – populated after upload succeeds */
   serverUrl?: string;
+  fileId?: string;
+  provider?: string;
 }
 
 export default function PhotoUpload({
@@ -34,20 +38,32 @@ export default function PhotoUpload({
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [previews, setPreviews] = useState<PreviewItem[]>(() =>
-    existingPhotos.map((url) => ({
-      id: url,
-      src: url,
-      persisted: true,
-      serverUrl: url,
-    }))
+    existingPhotos.map((item) => {
+      const isStr = typeof item === 'string';
+      const url = isStr ? item : item.url;
+      const fileId = isStr ? item : item.fileId || item.url;
+      const provider = isStr ? 'local' : item.provider || 'local';
+      return {
+        id: fileId,
+        src: url,
+        persisted: true,
+        serverUrl: url,
+        fileId: fileId,
+        provider: provider,
+      };
+    })
   );
 
   const notifyParent = useCallback(
     (items: PreviewItem[]) => {
-      const urls = items
+      const photos = items
         .filter((i) => i.persisted && i.serverUrl)
-        .map((i) => i.serverUrl!);
-      onChange(urls);
+        .map((i) => ({
+          url: i.serverUrl!,
+          fileId: i.fileId || i.serverUrl!,
+          provider: i.provider || 'local',
+        }));
+      onChange(photos);
     },
     [onChange]
   );
@@ -97,23 +113,29 @@ export default function PhotoUpload({
           throw new Error(data.error || 'Upload failed');
         }
 
-        const serverUrls: string[] = data.data.urls;
+        const serverFiles: StoredFile[] = data.data.files || data.data.urls.map((u: string) => ({
+          url: u,
+          fileId: u,
+          provider: 'local',
+        }));
 
         // Replace optimistic previews with server URLs
         setPreviews((prev) => {
           const next = [...prev];
-          let urlIdx = 0;
+          let fileIdx = 0;
           for (let i = 0; i < next.length; i++) {
-            if (!next[i].persisted && urlIdx < serverUrls.length) {
+            if (!next[i].persisted && fileIdx < serverFiles.length) {
               // Revoke object URL to free memory
               URL.revokeObjectURL(next[i].src);
               next[i] = {
                 ...next[i],
-                src: serverUrls[urlIdx],
+                src: serverFiles[fileIdx].url,
                 persisted: true,
-                serverUrl: serverUrls[urlIdx],
+                serverUrl: serverFiles[fileIdx].url,
+                fileId: serverFiles[fileIdx].fileId,
+                provider: serverFiles[fileIdx].provider,
               };
-              urlIdx++;
+              fileIdx++;
             }
           }
           notifyParent(next);
@@ -158,7 +180,6 @@ export default function PhotoUpload({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       uploadFiles(e.target.files);
-      // Reset input so same file can be re-selected
       e.target.value = '';
     }
   };
@@ -203,7 +224,6 @@ export default function PhotoUpload({
           </div>
         ) : (
           <>
-            {/* Cloud upload icon */}
             <svg
               className={`w-10 h-10 mb-2 ${isDragging ? 'text-blue-400' : 'text-slate-500'}`}
               fill="none"
@@ -261,14 +281,12 @@ export default function PhotoUpload({
                 className="w-full h-full object-cover"
               />
 
-              {/* Uploading overlay */}
               {!item.persisted && (
                 <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
 
-              {/* Remove button */}
               {item.persisted && (
                 <button
                   type="button"

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { IStoredFile } from './SystemSettings';
 
 export interface IAddress {
   street: string;
@@ -13,7 +14,7 @@ export interface IProperty extends Document {
   name: string;
   address: IAddress;
   description?: string;
-  photos: string[];
+  photos: IStoredFile[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -55,7 +56,13 @@ const PropertySchema = new Schema<IProperty>(
       maxlength: [2000, 'Description cannot exceed 2000 characters'],
     },
     photos: {
-      type: [String],
+      type: [
+        {
+          url: { type: String, default: '' },
+          fileId: { type: String, default: '' },
+          provider: { type: String, default: '' },
+        },
+      ],
       default: [],
     },
     isActive: {

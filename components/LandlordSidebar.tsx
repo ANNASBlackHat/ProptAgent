@@ -58,7 +58,7 @@ export default function LandlordSidebar({
           {user?.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={user.logo}
+              src={typeof user.logo === 'string' ? user.logo : user.logo.url}
               alt="Logo"
               className="w-9 h-9 rounded-lg object-cover border border-slate-700/50"
             />

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { IStoredFile } from './SystemSettings';
 
 export type MaintenanceCategory = 'plumbing' | 'electrical' | 'hvac' | 'structural' | 'appliance' | 'other';
 export type MaintenanceUrgency = 'low' | 'medium' | 'urgent';
@@ -20,7 +21,7 @@ export interface IMaintenanceRequest extends Document {
   urgency: MaintenanceUrgency;
   title: string;
   description: string;
-  photos: string[];
+  photos: IStoredFile[];
   status: MaintenanceStatus;
   landlordNotes: ILandlordNote[];
   resolvedAt?: Date;
@@ -98,9 +99,15 @@ const MaintenanceRequestSchema = new Schema<IMaintenanceRequest>(
       maxlength: [1000, 'Description cannot exceed 1000 characters'],
     },
     photos: {
-      type: [String],
+      type: [
+        {
+          url: { type: String, default: '' },
+          fileId: { type: String, default: '' },
+          provider: { type: String, default: '' },
+        },
+      ],
       validate: {
-        validator: function (val: string[]) {
+        validator: function (val: IStoredFile[]) {
           return val.length <= 3;
         },
         message: 'You can upload a maximum of 3 photos',

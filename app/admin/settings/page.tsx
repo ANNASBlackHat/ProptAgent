@@ -9,9 +9,15 @@ interface EmailTemplate {
   body: string;
 }
 
+interface StoredFile {
+  url: string;
+  fileId: string;
+  provider: string;
+}
+
 interface Settings {
   appName: string;
-  appLogo: string;
+  appLogo: StoredFile;
   aiProvider: string;
   aiBaseUrl: string;
   aiApiKey: string;
@@ -32,6 +38,11 @@ interface Settings {
   stripeWebhookSecretConfigured: boolean;
   stripeCurrency: string;
   stripeEnabled: boolean;
+  storageProvider: string;
+  imagekitPublicKey: string;
+  imagekitPrivateKey: string;
+  imagekitPrivateKeyConfigured: boolean;
+  imagekitUrlEndpoint: string;
   emailTemplates: {
     applicationConfirmation: EmailTemplate;
     statusChange: EmailTemplate;
@@ -153,15 +164,15 @@ function GeneralTab({
         <input
           id="settings-app-logo"
           type="text"
-          value={settings.appLogo}
-          onChange={(e) => onChange({ appLogo: e.target.value })}
+          value={settings.appLogo?.url || ''}
+          onChange={(e) => onChange({ appLogo: { url: e.target.value, fileId: '', provider: 'local' } })}
           className={inputCls}
           placeholder="/uploads/logo.png or https://…"
         />
-        {settings.appLogo && (
+        {settings.appLogo?.url && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={settings.appLogo}
+            src={settings.appLogo.url}
             alt="Preview"
             className="mt-3 h-12 w-auto rounded-lg border border-slate-800 object-contain bg-slate-900 p-1"
           />
@@ -683,6 +694,7 @@ const TABS = [
   { id: 'ai', label: 'AI Config', icon: '🤖' },
   { id: 'email', label: 'Email Config', icon: '📮' },
   { id: 'templates', label: 'Email Templates', icon: '✉️' },
+  { id: 'storage', label: 'Storage Config', icon: '📦' },
   { id: 'stripe', label: 'Stripe Config', icon: '💳' },
 ] as const;
 
@@ -690,7 +702,7 @@ type TabId = (typeof TABS)[number]['id'];
 
 const DEFAULT_SETTINGS: Settings = {
   appName: 'PropAgent',
-  appLogo: '',
+  appLogo: { url: '', fileId: '', provider: '' },
   aiProvider: 'openai',
   aiBaseUrl: '',
   aiApiKey: '',
@@ -711,6 +723,11 @@ const DEFAULT_SETTINGS: Settings = {
   stripeWebhookSecretConfigured: false,
   stripeCurrency: 'usd',
   stripeEnabled: false,
+  storageProvider: 'local',
+  imagekitPublicKey: '',
+  imagekitPrivateKey: '',
+  imagekitPrivateKeyConfigured: false,
+  imagekitUrlEndpoint: '',
   emailTemplates: {
     applicationConfirmation: { subject: '', body: '' },
     statusChange: { subject: '', body: '' },
@@ -731,6 +748,7 @@ export default function AdminSettingsPage() {
   const [smtpPassEdited, setSmtpPassEdited] = useState(false);
   const [stripeSecretKeyEdited, setStripeSecretKeyEdited] = useState(false);
   const [stripeWebhookSecretEdited, setStripeWebhookSecretEdited] = useState(false);
+  const [imagekitPrivateKeyEdited, setImagekitPrivateKeyEdited] = useState(false);
   
   const [lastSaved, setLastSaved] = useState<Record<string, Date>>({});
 
@@ -758,11 +776,15 @@ export default function AdminSettingsPage() {
         if (fetchedData.stripeWebhookSecretConfigured) {
           fetchedData.stripeWebhookSecret = '';
         }
+        if (fetchedData.imagekitPrivateKeyConfigured) {
+          fetchedData.imagekitPrivateKey = '';
+        }
         setSettings((prev) => ({ ...prev, ...fetchedData }));
         setApiKeyEdited(false);
         setSmtpPassEdited(false);
         setStripeSecretKeyEdited(false);
         setStripeWebhookSecretEdited(false);
+        setImagekitPrivateKeyEdited(false);
       }
     } catch {
       showToast('Failed to load settings', 'error');
@@ -787,6 +809,9 @@ export default function AdminSettingsPage() {
     }
     if (patch.stripeWebhookSecret !== undefined) {
       setStripeWebhookSecretEdited(true);
+    }
+    if (patch.imagekitPrivateKey !== undefined) {
+      setImagekitPrivateKeyEdited(true);
     }
     setSettings((prev) => ({ ...prev, ...patch }));
   };
@@ -824,6 +849,13 @@ export default function AdminSettingsPage() {
         }
         if (stripeWebhookSecretEdited) {
           payload.stripeWebhookSecret = settings.stripeWebhookSecret;
+        }
+      } else if (tabId === 'storage') {
+        payload.storageProvider = settings.storageProvider;
+        payload.imagekitPublicKey = settings.imagekitPublicKey;
+        payload.imagekitUrlEndpoint = settings.imagekitUrlEndpoint;
+        if (imagekitPrivateKeyEdited) {
+          payload.imagekitPrivateKey = settings.imagekitPrivateKey;
         }
       }
 
@@ -908,12 +940,230 @@ export default function AdminSettingsPage() {
               {activeTab === 'stripe' && (
                 <StripeConfigTab settings={settings} onChange={handleChange} onSave={() => handleSaveTab('stripe')} saving={saving} showToast={showToast} lastSaved={lastSaved.stripe} />
               )}
+              {activeTab === 'storage' && (
+                <StorageTab settings={settings} onChange={handleChange} onSave={() => handleSaveTab('storage')} saving={saving} showToast={showToast} lastSaved={lastSaved.storage} />
+              )}
             </div>
           </div>
         )}
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} />}
+    </div>
+  );
+}
+
+function StorageTab({
+  settings,
+  onChange,
+  onSave,
+  saving,
+  showToast,
+  lastSaved,
+}: {
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
+  onSave: () => void;
+  saving: boolean;
+  showToast: (message: string, type: 'success' | 'error') => void;
+  lastSaved?: Date;
+}) {
+  const [showKey, setShowKey] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    provider?: string;
+    message?: string;
+    error?: string;
+  } | null>(null);
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await fetch('/api/admin/settings/test-storage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestResult({
+          success: true,
+          provider: data.data.provider,
+          message: data.data.message,
+        });
+        showToast('Connection test passed!', 'success');
+      } else {
+        const errorMsg = data.error || 'Test failed';
+        setTestResult({
+          success: false,
+          error: errorMsg,
+        });
+        showToast(errorMsg, 'error');
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Network error';
+      setTestResult({
+        success: false,
+        error: errMsg,
+      });
+      showToast('Network error', 'error');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const isConfigured = !!settings.imagekitPublicKey && !!settings.imagekitPrivateKeyConfigured && !!settings.imagekitUrlEndpoint;
+
+  return (
+    <div className="space-y-5">
+      <SectionHeader
+        title="Storage Configuration"
+        desc="Choose where to save uploaded files (photos, lease PDFs). ImageKit is recommended for production."
+      />
+
+      {/* Storage provider selector */}
+      <Field label="Storage Provider">
+        <div className="grid grid-cols-2 gap-3 mt-1 sm:grid-cols-2">
+          {[
+            { id: 'local', label: 'Local File System (Dev)', hint: 'Files saved locally inside /public/uploads/' },
+            { id: 'imagekit', label: 'ImageKit SaaS (Prod)', hint: 'Highly reliable cloud storage from imagekit.io' },
+          ].map((prov) => (
+            <label
+              key={prov.id}
+              className={`flex flex-col gap-1 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
+                settings.storageProvider === prov.id
+                  ? 'bg-purple-500/10 border-purple-500/40 text-purple-200 shadow-md shadow-purple-500/5'
+                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-300 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  id={`settings-storage-provider-${prov.id}`}
+                  type="radio"
+                  name="storageProvider"
+                  value={prov.id}
+                  checked={settings.storageProvider === prov.id}
+                  onChange={() => onChange({ storageProvider: prov.id })}
+                  className="w-4 h-4 text-purple-600 bg-slate-900 border-slate-700 focus:ring-purple-500 focus:ring-offset-slate-900 focus:ring-2"
+                />
+                <span className="text-sm font-semibold">{prov.label}</span>
+              </div>
+              <span className="text-[11px] text-slate-500 pl-7">{prov.hint}</span>
+            </label>
+          ))}
+        </div>
+      </Field>
+
+      {/* Storage status indicator */}
+      <div className="p-4 rounded-xl border bg-slate-900/40 border-slate-800">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Storage Provider Status</p>
+        {settings.storageProvider === 'local' ? (
+          <div className="flex items-start gap-2.5 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg animate-fade-in">
+            <span className="text-sm">⚠️</span>
+            <p className="leading-normal">
+              Local storage is not suitable for production. Files will be lost on server restart or redeploy.
+            </p>
+          </div>
+        ) : isConfigured ? (
+          <div className="flex items-start gap-2.5 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg animate-fade-in">
+            <span className="text-sm">✓</span>
+            <p className="leading-normal">
+              ImageKit connected
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2.5 text-xs text-red-300 bg-red-500/10 border border-red-500/20 p-3 rounded-lg animate-fade-in">
+            <span className="text-sm">✗</span>
+            <p className="leading-normal">
+              ImageKit not configured — uploads will fail
+            </p>
+          </div>
+        )}
+      </div>
+
+      {settings.storageProvider === 'imagekit' && (
+        <div className="space-y-4 border-t border-slate-800/60 pt-4">
+          <Field label="ImageKit Public Key">
+            <input
+              id="settings-imagekit-public"
+              type="text"
+              value={settings.imagekitPublicKey || ''}
+              onChange={(e) => onChange({ imagekitPublicKey: e.target.value })}
+              className={inputCls}
+              placeholder="public_..."
+            />
+          </Field>
+
+          <Field label="ImageKit Private Key">
+            <div className="relative">
+              <input
+                id="settings-imagekit-private"
+                type={showKey ? 'text' : 'password'}
+                value={settings.imagekitPrivateKey || ''}
+                onChange={(e) => {
+                  onChange({ imagekitPrivateKey: e.target.value });
+                }}
+                className={inputCls}
+                placeholder={settings.imagekitPrivateKeyConfigured ? '••••••••••••••••' : 'private_...'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey(!showKey)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200"
+              >
+                {showKey ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </Field>
+
+          <Field label="ImageKit URL Endpoint">
+            <input
+              id="settings-imagekit-endpoint"
+              type="text"
+              value={settings.imagekitUrlEndpoint || ''}
+              onChange={(e) => onChange({ imagekitUrlEndpoint: e.target.value })}
+              className={inputCls}
+              placeholder="https://ik.imagekit.io/your_id"
+            />
+          </Field>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleTest}
+              disabled={testing || saving}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 disabled:opacity-50 transition-all cursor-pointer"
+            >
+              {testing ? 'Testing connection…' : 'Test Connection'}
+            </button>
+          </div>
+
+          {testResult && (
+            <div className={`p-4 rounded-xl border text-xs leading-normal mt-2 animate-fade-in ${
+              testResult.success 
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+                : 'bg-red-500/10 border-red-500/20 text-red-300'
+            }`}>
+              {testResult.success ? (
+                <div>
+                  <p className="font-semibold">ImageKit connected successfully</p>
+                  <p className="mt-1 opacity-80">Tested folder upload & delete using active credentials.</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-semibold">Connection failed</p>
+                  <p className="mt-1 opacity-80">{testResult.error}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="pt-2 border-t border-slate-800/60">
+        <SaveButton saving={saving} onSave={onSave} lastSaved={lastSaved} />
+      </div>
     </div>
   );
 }

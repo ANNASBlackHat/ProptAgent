@@ -153,6 +153,7 @@ export default function PropertiesPage() {
 
 function PropertyCard({ property }: { property: PropertyItem }) {
   const thumbnail = property.photos?.[0];
+  const thumbnailUrl = thumbnail ? (typeof thumbnail === 'string' ? thumbnail : (thumbnail as any)?.url || '') : '';
   const addr = property.address;
   const addressLine = `${addr.city}, ${addr.state}`;
 
@@ -164,10 +165,10 @@ function PropertyCard({ property }: { property: PropertyItem }) {
     >
       {/* Thumbnail */}
       <div className="relative h-44 bg-slate-800 overflow-hidden">
-        {thumbnail ? (
+        {thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={thumbnail}
+            src={thumbnailUrl}
             alt={`${property.name} thumbnail`}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

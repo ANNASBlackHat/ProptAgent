@@ -10,6 +10,8 @@ export const dynamic = 'force-dynamic';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB limit for PDFs
 
+import { uploadFile, deleteFile } from '@/lib/storage';
+
 // POST /api/leases/[id]/documents — Upload a PDF lease document
 async function uploadDocument(
   req: AuthenticatedRequest,
@@ -67,24 +69,18 @@ async function uploadDocument(
       );
     }
 
-    // 3. Save file to disk
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'leases', leaseId);
-    fs.mkdirSync(uploadDir, { recursive: true });
-
-    // Sanitize filename
-    const sanitized = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const finalName = `${Date.now()}-${sanitized}`;
-    const finalPath = path.join(uploadDir, finalName);
-
-    // Convert file to Buffer and write it
+    // Convert file to Buffer
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(finalPath, buffer);
+    
+    // Upload using storage layer
+    const uploadResult = await uploadFile(buffer, originalName, `leases/${leaseId}`, 'application/pdf');
 
     // 4. Update lease document array
-    const relativePath = `/uploads/leases/${leaseId}/${finalName}`;
     const newDoc = {
       filename: originalName,
-      path: relativePath,
+      path: uploadResult.url,
+      fileId: uploadResult.fileId,
+      provider: uploadResult.provider,
       uploadedAt: new Date(),
     };
 
@@ -104,4 +100,71 @@ async function uploadDocument(
   }
 }
 
+// DELETE /api/leases/[id]/documents — Delete a PDF lease document
+async function deleteDocument(
+  req: AuthenticatedRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    await dbConnect();
+    const landlordId = req.user!.userId;
+    const { id: leaseId } = await context.params;
+
+    const url = new URL(req.url);
+    const fileId = url.searchParams.get('fileId');
+
+    if (!fileId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing fileId parameter' },
+        { status: 400 }
+      );
+    }
+
+    const lease = await Lease.findById(leaseId);
+    if (!lease) {
+      return NextResponse.json(
+        { success: false, error: 'Lease not found' },
+        { status: 404 }
+      );
+    }
+
+    if (lease.landlordId.toString() !== landlordId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Find document to delete by fileId or path
+    const docIndex = lease.documents.findIndex(d => d.fileId === fileId || d.path === fileId);
+    if (docIndex === -1) {
+      return NextResponse.json(
+        { success: false, error: 'Document not found' },
+        { status: 404 }
+      );
+    }
+
+    const doc = lease.documents[docIndex];
+    
+    // Call deleteFile (does not throw)
+    await deleteFile(doc.fileId, doc.provider);
+
+    // Remove from array and save
+    lease.documents.splice(docIndex, 1);
+    await lease.save();
+
+    return NextResponse.json({
+      success: true,
+      data: { message: 'Document deleted successfully' }
+    });
+  } catch (error) {
+    console.error('DELETE /api/leases/[id]/documents error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete document' },
+      { status: 500 }
+    );
+  }
+}
+
 export const POST = withAuth(uploadDocument, ['landlord']);
+export const DELETE = withAuth(deleteDocument, ['landlord']);

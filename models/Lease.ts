@@ -6,6 +6,8 @@ export type PaymentMethod = 'cash' | 'bank_transfer' | 'online' | 'other';
 export interface ILeaseDocument {
   filename: string;
   path: string;
+  fileId: string;
+  provider: string;
   uploadedAt: Date;
 }
 
@@ -42,6 +44,8 @@ const LeaseDocumentSchema = new Schema<ILeaseDocument>(
   {
     filename: { type: String, required: true },
     path: { type: String, required: true },
+    fileId: { type: String, required: true },
+    provider: { type: String, required: true },
     uploadedAt: { type: Date, default: Date.now },
   },
   { _id: false }

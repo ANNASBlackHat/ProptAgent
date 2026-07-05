@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { IStoredFile } from './SystemSettings';
 
 export type UnitType = 'studio' | '1BR' | '2BR' | '3BR' | 'other';
 export type UnitStatus = 'available' | 'occupied' | 'maintenance' | 'reserved';
@@ -14,7 +15,7 @@ export interface IUnit extends Document {
   depositAmount?: number;
   status: UnitStatus;
   description?: string;
-  photos: string[];
+  photos: IStoredFile[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -79,7 +80,13 @@ const UnitSchema = new Schema<IUnit>(
       maxlength: [2000, 'Description cannot exceed 2000 characters'],
     },
     photos: {
-      type: [String],
+      type: [
+        {
+          url: { type: String, default: '' },
+          fileId: { type: String, default: '' },
+          provider: { type: String, default: '' },
+        },
+      ],
       default: [],
     },
     isActive: {

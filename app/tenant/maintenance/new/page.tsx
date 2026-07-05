@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import PhotoUpload from '@/components/PhotoUpload';
+import PhotoUpload, { StoredFile } from '@/components/PhotoUpload';
 import TenantNav from '@/components/TenantNav';
 import { MaintenanceCategory, MaintenanceUrgency } from '@/models/MaintenanceRequest';
 
@@ -41,7 +41,7 @@ export default function TenantNewMaintenanceRequestPage() {
   const [category, setCategory] = useState<MaintenanceCategory | ''>('');
   const [urgency, setUrgency] = useState<MaintenanceUrgency>('medium');
   const [description, setDescription] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<StoredFile[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

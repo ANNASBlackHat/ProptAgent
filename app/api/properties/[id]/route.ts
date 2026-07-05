@@ -35,6 +35,8 @@ async function getProperty(req: AuthenticatedRequest, context: unknown) {
   }
 }
 
+import { deleteFile } from '@/lib/storage';
+
 // PUT /api/properties/[id] — update property
 async function updateProperty(req: AuthenticatedRequest, context: unknown) {
   try {
@@ -51,6 +53,23 @@ async function updateProperty(req: AuthenticatedRequest, context: unknown) {
     // Strip protected fields
     delete body.landlordId;
     delete body._id;
+
+    const existing = await Property.findOne({ _id: id, landlordId: req.user!.userId, isActive: true });
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    }
+
+    // Call deleteFile for any photos removed in this update
+    if (body.photos && Array.isArray(body.photos)) {
+      const removedPhotos = (existing.photos || []).filter(
+        (ep) => !body.photos.some((np: any) => np.fileId === ep.fileId || np.url === ep.url)
+      );
+      for (const photo of removedPhotos) {
+        if (photo.fileId && photo.provider) {
+          await deleteFile(photo.fileId, photo.provider);
+        }
+      }
+    }
 
     const property = await Property.findOneAndUpdate(
       { _id: id, landlordId: req.user!.userId, isActive: true },

@@ -199,7 +199,7 @@ export default function PropertyDetailPage() {
                 <div className="relative aspect-video">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={photos[photoIndex]}
+                    src={typeof photos[photoIndex] === 'string' ? photos[photoIndex] : (photos[photoIndex] as any)?.url || ''}
                     alt={`${property.name} photo ${photoIndex + 1}`}
                     className="w-full h-full object-cover"
                   />
@@ -245,7 +245,7 @@ export default function PropertyDetailPage() {
                         aria-label={`Photo ${i + 1}`}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p} alt="" className="w-full h-full object-cover" />
+                        <img src={typeof p === 'string' ? p : (p as any)?.url || ''} alt="" className="w-full h-full object-cover" />
                       </button>
                     ))}
                   </div>

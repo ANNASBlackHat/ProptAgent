@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import PhotoUpload from '@/components/PhotoUpload';
+import PhotoUpload, { StoredFile } from '@/components/PhotoUpload';
 
 interface UnitFormData {
   unitNumber: string;
@@ -13,7 +13,7 @@ interface UnitFormData {
   rentAmount: string;
   depositAmount: string;
   description: string;
-  photos: string[];
+  photos: StoredFile[];
 }
 
 const INITIAL: UnitFormData = {

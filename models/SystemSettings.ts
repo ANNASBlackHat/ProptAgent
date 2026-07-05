@@ -55,9 +55,15 @@ export interface IEmailTemplates {
 
 // ─── Main interface ───────────────────────────────────────────────────────────
 
+export interface IStoredFile {
+  url: string;
+  fileId: string;
+  provider: string;
+}
+
 export interface ISystemSettings extends Document {
   appName: string;
-  appLogo: string;
+  appLogo: IStoredFile;
   aiProvider: string;
   aiBaseUrl: string;
   aiApiKey: string; // stored encrypted
@@ -73,11 +79,24 @@ export interface ISystemSettings extends Document {
   stripeWebhookSecret: string; // stored encrypted
   stripeCurrency: string;
   stripeEnabled: boolean;
+  storageProvider: string;
+  imagekitPublicKey: string;
+  imagekitPrivateKey: string; // stored encrypted
+  imagekitUrlEndpoint: string;
   emailTemplates: IEmailTemplates;
   updatedAt: Date;
 }
 
 // ─── Sub-schemas ──────────────────────────────────────────────────────────────
+
+const StoredFileSchema = new Schema<IStoredFile>(
+  {
+    url: { type: String, default: '' },
+    fileId: { type: String, default: '' },
+    provider: { type: String, default: '' },
+  },
+  { _id: false }
+);
 
 const EmailTemplateSchema = new Schema<IEmailTemplate>(
   {
@@ -115,7 +134,7 @@ const defaultTemplates = {
 const SystemSettingsSchema = new Schema<ISystemSettings>(
   {
     appName: { type: String, default: 'PropAgent' },
-    appLogo: { type: String, default: '' },
+    appLogo: { type: StoredFileSchema, default: () => ({ url: '', fileId: '', provider: '' }) },
     aiProvider: { type: String, default: 'openai' },
     aiBaseUrl: { type: String, default: '' },
     aiApiKey: { type: String, default: '' }, // stored encrypted
@@ -131,6 +150,10 @@ const SystemSettingsSchema = new Schema<ISystemSettings>(
     stripeWebhookSecret: { type: String, default: '' }, // stored encrypted
     stripeCurrency: { type: String, default: 'usd' },
     stripeEnabled: { type: Boolean, default: false },
+    storageProvider: { type: String, default: 'local' },
+    imagekitPublicKey: { type: String, default: '' },
+    imagekitPrivateKey: { type: String, default: '' }, // stored encrypted
+    imagekitUrlEndpoint: { type: String, default: '' },
     emailTemplates: {
       applicationConfirmation: { type: EmailTemplateSchema, default: () => ({ ...defaultTemplates.applicationConfirmation }) },
       statusChange: { type: EmailTemplateSchema, default: () => ({ ...defaultTemplates.statusChange }) },
@@ -166,6 +189,10 @@ SystemSettingsSchema.statics.getSingleton = async function (): Promise<ISystemSe
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ? encryptField(process.env.STRIPE_WEBHOOK_SECRET) : '',
       stripeCurrency: process.env.STRIPE_CURRENCY || 'usd',
       stripeEnabled: process.env.STRIPE_ENABLED === 'true',
+      storageProvider: process.env.STORAGE_PROVIDER || 'local',
+      imagekitPublicKey: process.env.IMAGEKIT_PUBLIC_KEY || '',
+      imagekitPrivateKey: process.env.IMAGEKIT_PRIVATE_KEY ? encryptField(process.env.IMAGEKIT_PRIVATE_KEY) : '',
+      imagekitUrlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || '',
     });
   }
   return settings;

@@ -219,27 +219,30 @@ export default function LandlordMaintenanceDetailPage({ params }: { params: { id
                 </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {request.photos.map((url, idx) => (
-                    <div
-                      key={idx}
-                      className="relative aspect-video sm:aspect-square rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={url}
-                        alt={`Attachment ${idx + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="absolute bottom-2 right-2 px-2 py-1 rounded bg-slate-900/80 hover:bg-slate-900 text-[10px] font-semibold text-slate-200 transition-colors"
+                  {request.photos.map((photo, idx) => {
+                    const url = typeof photo === 'string' ? photo : (photo as any)?.url || '';
+                    return (
+                      <div
+                        key={idx}
+                        className="relative aspect-video sm:aspect-square rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group"
                       >
-                        View Full
-                      </a>
-                    </div>
-                  ))}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={`Attachment ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute bottom-2 right-2 px-2 py-1 rounded bg-slate-900/80 hover:bg-slate-900 text-[10px] font-semibold text-slate-200 transition-colors"
+                        >
+                          View Full
+                        </a>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

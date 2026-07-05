@@ -137,6 +137,16 @@ g) **Go live**: Swap test keys for live keys in Admin → Settings → Stripe Co
 
 ---
 
+## 📦 STORAGE SETUP
+
+a) **Prerequisites**: ImageKit account required (free to create at [imagekit.io](https://imagekit.io))
+b) **Get API keys**: Dashboard → Developer Options → API Keys. Copy **Public Key**, **Private Key**, and **URL Endpoint**.
+c) **Enter keys**: Enter credentials in Admin Panel → Settings → Storage Config tab.
+d) **Verify Connection**: Click "Test Connection" to test file uploads and deletions in ImageKit.
+e) **Default fallback**: If no cloud configuration is entered or the provider is set to "local", uploads default to public uploads folder `/public/uploads/`. Note that local storage is not persistent on serverless platforms or container redeploys.
+
+---
+
 ## 📅 SUBSCRIPTION PLANS
 
 a) **Seed default plans**: Send a `POST` request to `/api/admin/plans/seed-defaults` or add an npm script:

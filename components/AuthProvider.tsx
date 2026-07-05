@@ -9,7 +9,7 @@ export interface AuthUser {
   role: 'super_admin' | 'landlord' | 'tenant';
   isActive: boolean;
   companyName?: string;
-  logo?: string;
+  logo?: string | { url: string; fileId?: string; provider?: string };
   phone?: string;
   planSlug?: string;
   subscriptionStatus?: string;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
 import User from '@/models/User';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
+import { deleteFile } from '@/lib/storage';
 
 async function updateProfile(req: AuthenticatedRequest) {
   try {
@@ -82,7 +83,13 @@ async function updateProfile(req: AuthenticatedRequest) {
     if (name) landlord.name = name;
     if (phone !== undefined) landlord.phone = phone;
     if (companyName) landlord.companyName = companyName;
-    if (logo !== undefined) landlord.logo = logo;
+    if (logo !== undefined) {
+      const oldLogo = landlord.logo;
+      if (oldLogo && oldLogo.fileId && (oldLogo.fileId !== logo.fileId || oldLogo.url !== logo.url)) {
+        await deleteFile(oldLogo.fileId, oldLogo.provider);
+      }
+      landlord.logo = logo;
+    }
 
     await landlord.save();
 

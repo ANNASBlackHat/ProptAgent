@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import PhotoUpload from '@/components/PhotoUpload';
+import PhotoUpload, { StoredFile } from '@/components/PhotoUpload';
 
 interface PropertyFormData {
   name: string;
   description: string;
-  photos: string[];
+  photos: StoredFile[];
   address: {
     street: string;
     city: string;

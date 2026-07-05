@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { IStoredFile } from './SystemSettings';
 
 export interface IUser extends Document {
   name: string;
@@ -8,7 +9,7 @@ export interface IUser extends Document {
   role: 'super_admin' | 'landlord' | 'tenant';
   isActive: boolean;
   companyName?: string;
-  logo?: string;
+  logo?: IStoredFile;
   phone?: string;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
@@ -81,7 +82,9 @@ const UserSchema = new Schema<IUser>({
     },
   },
   logo: {
-    type: String,
+    url: { type: String, default: '' },
+    fileId: { type: String, default: '' },
+    provider: { type: String, default: '' },
   },
   phone: {
     type: String,

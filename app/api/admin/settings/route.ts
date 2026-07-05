@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/lib/auth';
 import { dbConnect } from '@/lib/db';
 import SystemSettings, { encryptField } from '@/models/SystemSettings';
+import { deleteFile } from '@/lib/storage';
 
 // GET /api/admin/settings — get system settings (sensitive fields masked)
 async function getHandler(_req: AuthenticatedRequest): Promise<Response> {
@@ -35,6 +36,11 @@ async function getHandler(_req: AuthenticatedRequest): Promise<Response> {
         stripeWebhookSecretConfigured: !!(settings as any).stripeWebhookSecret,
         stripeCurrency: (settings as any).stripeCurrency || 'usd',
         stripeEnabled: (settings as any).stripeEnabled || false,
+        storageProvider: settings.storageProvider || 'local',
+        imagekitPublicKey: settings.imagekitPublicKey || '',
+        imagekitPrivateKey: settings.imagekitPrivateKey ? '••••••••••••••••' : '',
+        imagekitPrivateKeyConfigured: !!settings.imagekitPrivateKey,
+        imagekitUrlEndpoint: settings.imagekitUrlEndpoint || '',
         emailTemplates: settings.emailTemplates,
         updatedAt: settings.updatedAt,
       },
@@ -58,7 +64,13 @@ async function putHandler(req: AuthenticatedRequest): Promise<Response> {
 
     // General
     if (body.appName !== undefined) settings.appName = body.appName;
-    if (body.appLogo !== undefined) settings.appLogo = body.appLogo;
+    if (body.appLogo !== undefined) {
+      const oldLogo = settings.appLogo;
+      if (oldLogo && oldLogo.fileId && (oldLogo.fileId !== body.appLogo.fileId || oldLogo.url !== body.appLogo.url)) {
+        await deleteFile(oldLogo.fileId, oldLogo.provider);
+      }
+      settings.appLogo = body.appLogo;
+    }
 
     // AI config
     if (body.aiProvider !== undefined) settings.aiProvider = body.aiProvider;
@@ -125,6 +137,21 @@ async function putHandler(req: AuthenticatedRequest): Promise<Response> {
     }
     if (body.clearStripeWebhookSecret) {
       (settings as any).stripeWebhookSecret = '';
+    }
+
+    // Storage config
+    if (body.storageProvider !== undefined) settings.storageProvider = body.storageProvider;
+    if (body.imagekitPublicKey !== undefined) settings.imagekitPublicKey = body.imagekitPublicKey;
+    if (body.imagekitUrlEndpoint !== undefined) settings.imagekitUrlEndpoint = body.imagekitUrlEndpoint;
+    if (body.imagekitPrivateKey !== undefined) {
+      if (body.imagekitPrivateKey === '') {
+        settings.imagekitPrivateKey = '';
+      } else if (!body.imagekitPrivateKey.includes('•')) {
+        settings.imagekitPrivateKey = encryptField(body.imagekitPrivateKey);
+      }
+    }
+    if (body.clearImagekitPrivateKey) {
+      settings.imagekitPrivateKey = '';
     }
 
     // Email templates

@@ -44,6 +44,8 @@ async function getUnit(req: AuthenticatedRequest, context: unknown) {
   }
 }
 
+import { deleteFile } from '@/lib/storage';
+
 // PUT /api/units/[id] — update unit
 async function updateUnit(req: AuthenticatedRequest, context: unknown) {
   try {
@@ -82,6 +84,18 @@ async function updateUnit(req: AuthenticatedRequest, context: unknown) {
     // If landlordId was missing on this unit, repair it silently
     if (!existing.landlordId) {
       body.landlordId = req.user!.userId;
+    }
+
+    // Call deleteFile for any photos removed in this update
+    if (body.photos && Array.isArray(body.photos)) {
+      const removedPhotos = (existing.photos || []).filter(
+        (ep) => !body.photos.some((np: any) => np.fileId === ep.fileId || np.url === ep.url)
+      );
+      for (const photo of removedPhotos) {
+        if (photo.fileId && photo.provider) {
+          await deleteFile(photo.fileId, photo.provider);
+        }
+      }
     }
 
     const unit = await Unit.findByIdAndUpdate(
